@@ -30,7 +30,7 @@ object RequestHandler {
         os.close()
         val responseCode: Int = conn.responseCode // To Check for 200
         if (responseCode == HttpsURLConnection.HTTP_OK) {
-            print(responseCode)
+            throw IOException(conn.responseMessage)
         }
     }
 }

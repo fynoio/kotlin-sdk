@@ -11,7 +11,7 @@ import io.fyno.models.MessageStatus
 class FynoSdk {
     companion object {
         private var fynoPreferences: SharedPreferences? = null
-        fun setString(key: String?, value: String?) {
+        private fun setString(key: String?, value: String?) {
             val editor: SharedPreferences.Editor? = fynoPreferences?.edit()
             editor?.putString(key, value)
             editor?.apply()
@@ -45,7 +45,7 @@ class FynoSdk {
             postDataParams.put("message", message)
             postDataParams.put("dlr_params", callback_object[1])
             Thread(Runnable {
-                RequestHandler.requestPOST(callback , postDataParams)
+                RequestHandler.requestPOST(callback_url , postDataParams)
             }).start()
         }
     }
