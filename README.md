@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 ![Fyno: Fire your notifications](https://media-exp1.licdn.com/dms/image/D561BAQGlc_gJy29kQA/company-background_10000/0/1660044270257?e=1670940000&v=beta&t=Hxq_mWNsivmJ1j0FZZvvHhwQtXvQSrhEMQ2BPMpPYVU)
 ## Overview
 Fyno Android SDK allows you to track your notification delivery
+=======
+<div style="display: flex;gap:10px"><img src="https://app.dev.fyno.io/images/fyno-logo.svg" width="50"><h1> Fyno - Android SDK</h1></div>
+
+Fyno Android SDK allows you to track your notification delivery
+## Overview
+>>>>>>> 8383b5fb81f0a0a218485db2af6a10b4d4c99083
 #### Prerequisites
 1. Setup Firebase/OneSignal 
 
