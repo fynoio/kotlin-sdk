@@ -15,7 +15,7 @@ Fyno Android SDK allows you to track your notification delivery
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         maven { url 'https://jitpack.io' }
     }
 }
