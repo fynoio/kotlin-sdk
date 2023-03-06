@@ -1,6 +1,6 @@
 ## Overview
+![Fyno: Fire your notifications](https://fynodev.s3.ap-south-1.amazonaws.com/others/Fyno_Banner.jpeg)
 Fyno Android SDK allows you to track your notification delivery
-=======
 <div style="display: flex;gap:10px"><img src="https://app.dev.fyno.io/images/fyno-logo.svg" width="50"><h1> Fyno - Android SDK</h1></div>
 
 Fyno Android SDK allows you to track your notification delivery
