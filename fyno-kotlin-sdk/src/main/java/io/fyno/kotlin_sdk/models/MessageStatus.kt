@@ -1,4 +1,4 @@
-package io.fyno.models
+package com.fynoio.pushsdk.models
 
 enum class MessageStatus {
     RECEIVED,

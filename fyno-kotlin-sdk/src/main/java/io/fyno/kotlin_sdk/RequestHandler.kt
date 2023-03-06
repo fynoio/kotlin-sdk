@@ -1,4 +1,6 @@
 package io.fyno.kotlin_sdk
+
+import android.util.Log
 import org.json.JSONObject
 import java.io.BufferedWriter
 import java.io.IOException
@@ -6,9 +8,7 @@ import java.io.OutputStream
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
-import java.net.URLEncoder
 import javax.net.ssl.HttpsURLConnection
-
 
 object RequestHandler {
     private val POST : String = "POST"
@@ -29,7 +29,8 @@ object RequestHandler {
         writer.close()
         os.close()
         val responseCode: Int = conn.responseCode // To Check for 200
-        if (responseCode == HttpsURLConnection.HTTP_OK) {
+        Log.d("RequestPost", "requestPOST: "+conn.responseMessage)
+        if (responseCode != HttpsURLConnection.HTTP_OK) {
             throw IOException(conn.responseMessage)
         }
     }
