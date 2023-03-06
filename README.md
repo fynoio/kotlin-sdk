@@ -1,4 +1,3 @@
-![Fyno: Fire your notifications](https://media-exp1.licdn.com/dms/image/D561BAQGlc_gJy29kQA/company-background_10000/0/1660044270257?e=1670940000&v=beta&t=Hxq_mWNsivmJ1j0FZZvvHhwQtXvQSrhEMQ2BPMpPYVU)
 ## Overview
 Fyno Android SDK allows you to track your notification delivery
 =======
