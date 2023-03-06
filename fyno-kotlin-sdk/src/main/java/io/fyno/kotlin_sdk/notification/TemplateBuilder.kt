@@ -16,12 +16,12 @@ import androidx.core.graphics.toColorInt
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import io.fyno.kotlin_sdk.FynoSdk
-import com.fynoio.pushsdk.R
 import com.fynoio.pushsdk.notificationIntents.NotificationDismissedReceiver
 import com.fynoio.pushsdk.notificationIntents.NotificationActionClickActivity
 import com.fynoio.pushsdk.notificationIntents.NotificationClickActivity
 import com.google.firebase.messaging.RemoteMessage
 import com.xiaomi.mipush.sdk.MiPushMessage
+import io.fyno.kotlin_sdk.R
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.*
