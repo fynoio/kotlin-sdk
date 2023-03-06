@@ -27,20 +27,14 @@ implementation 'com.github.fynoio:kotlin-sdk:1.0.0'
 ```
 <sup>[check the latest version here](https://jitpack.io/#fynoio/kotlin-sdk)</sup>
 
-5. add the following in your Firebase/OneSignal ```onMessageReceived``` listener to update Fyno with delivery status.
+5. add the following in your ```MainActivity```.
 ```kotlin
-val callback = remoteMessage.data["fyno_callback"]
+//Initilize
+FynoSdk.initialize(context, workspace_id)
 
-//When notification is received
-FynoSdk.updateStatus(callback, MessageStatus.RECEIVED)
-
-//When notification is clicked
-FynoSdk.updateStatus(callback, MessageStatus.OPENED)
-
-//When notification action is clicked
-FynoSdk.updateStatus(callback, MessageStatus.CLICKED)
-
-//When notification is dismissed
-FynoSdk.updateStatus(callback, MessageStatus.DISMISSED)
-
+//for enabling mi push
+FynoSdk.setMiRegion(PushRegion.Global)
+FynoSdk.registerMiPush(APP_ID, APP_KEY)
 ```
+
+
