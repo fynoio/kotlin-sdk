@@ -1,4 +1,4 @@
-package com.fynoio.pushsdk.notificationIntents
+package io.fyno.kotlin_sdk.notificationIntents
 
 import android.content.Intent
 import android.net.Uri
@@ -6,7 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import io.fyno.kotlin_sdk.FynoSdk
-import com.fynoio.pushsdk.models.MessageStatus
+import io.fyno.kotlin_sdk.models.MessageStatus
 
 class NotificationClickActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

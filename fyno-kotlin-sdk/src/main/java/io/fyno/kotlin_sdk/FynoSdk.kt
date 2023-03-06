@@ -6,8 +6,8 @@ import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import com.fynoio.pushsdk.models.MessageStatus
-import com.fynoio.pushsdk.models.PushRegion
+import io.fyno.kotlin_sdk.models.MessageStatus
+import io.fyno.kotlin_sdk.models.PushRegion
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
 import com.xiaomi.channel.commonutils.android.Region

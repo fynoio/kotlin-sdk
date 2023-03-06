@@ -1,4 +1,4 @@
-package com.fynoio.pushsdk.models
+package io.fyno.kotlin_sdk.models
 
 enum class PushRegion{
     INDIA,

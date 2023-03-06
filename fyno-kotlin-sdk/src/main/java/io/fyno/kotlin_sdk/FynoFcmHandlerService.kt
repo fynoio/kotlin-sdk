@@ -1,8 +1,8 @@
 package io.fyno.kotlin_sdk
 
 import android.util.Log
-import com.fynoio.pushsdk.models.MessageStatus
-import com.fynoio.pushsdk.notification.TemplateBuilder
+import io.fyno.kotlin_sdk.models.MessageStatus
+import io.fyno.kotlin_sdk.notification.TemplateBuilder
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 

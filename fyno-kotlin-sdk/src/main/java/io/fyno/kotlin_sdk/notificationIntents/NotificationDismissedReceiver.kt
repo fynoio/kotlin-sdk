@@ -1,11 +1,11 @@
-package com.fynoio.pushsdk.notificationIntents
+package io.fyno.kotlin_sdk.notificationIntents
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
 import io.fyno.kotlin_sdk.FynoSdk
-import com.fynoio.pushsdk.models.MessageStatus
+import io.fyno.kotlin_sdk.models.MessageStatus
 
 class NotificationDismissedReceiver : BroadcastReceiver() {
 

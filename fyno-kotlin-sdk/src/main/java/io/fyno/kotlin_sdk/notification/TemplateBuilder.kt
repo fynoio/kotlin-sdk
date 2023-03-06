@@ -1,4 +1,4 @@
-package com.fynoio.pushsdk.notification
+package io.fyno.kotlin_sdk.notification
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -16,9 +16,9 @@ import androidx.core.graphics.toColorInt
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import io.fyno.kotlin_sdk.FynoSdk
-import com.fynoio.pushsdk.notificationIntents.NotificationDismissedReceiver
-import com.fynoio.pushsdk.notificationIntents.NotificationActionClickActivity
-import com.fynoio.pushsdk.notificationIntents.NotificationClickActivity
+import io.fyno.kotlin_sdk.notificationIntents.NotificationDismissedReceiver
+import io.fyno.kotlin_sdk.notificationIntents.NotificationActionClickActivity
+import io.fyno.kotlin_sdk.notificationIntents.NotificationClickActivity
 import com.google.firebase.messaging.RemoteMessage
 import com.xiaomi.mipush.sdk.MiPushMessage
 import io.fyno.kotlin_sdk.R

@@ -1,4 +1,4 @@
-package com.fynoio.pushsdk.notificationIntents
+package io.fyno.kotlin_sdk.notificationIntents
 
 import android.app.NotificationManager
 import android.content.Context
@@ -10,7 +10,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import io.fyno.kotlin_sdk.FynoSdk
-import com.fynoio.pushsdk.models.MessageStatus
+import io.fyno.kotlin_sdk.models.MessageStatus
 
 
 class NotificationActionClickActivity : AppCompatActivity() {

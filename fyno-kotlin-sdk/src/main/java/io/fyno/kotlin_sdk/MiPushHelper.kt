@@ -3,8 +3,8 @@ package io.fyno.kotlin_sdk
 import android.content.Context
 import android.text.TextUtils
 import android.util.Log
-import com.fynoio.pushsdk.models.MessageStatus
-import com.fynoio.pushsdk.notification.TemplateBuilder
+import io.fyno.kotlin_sdk.models.MessageStatus
+import io.fyno.kotlin_sdk.notification.TemplateBuilder
 import com.xiaomi.mipush.sdk.*
 import org.json.JSONObject
 
