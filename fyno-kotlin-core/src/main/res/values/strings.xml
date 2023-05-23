@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="CHANNEL_ID">1</string>
+    <string name="CHANNEL_NAME">Default</string>
+    <string name="CHANNEL_DESCRIPTION">This is default notification channel</string>
+</resources>
