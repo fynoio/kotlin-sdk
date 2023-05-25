@@ -21,6 +21,7 @@ class NotificationActionClickActivity : AppCompatActivity() {
         Log.d("NotificationActionClick", "onCreate: ")
         handleActionClick()
         super.onCreate(savedInstanceState)
+        finish()
     }
     @RequiresApi(Build.VERSION_CODES.M)
     private fun handleActionClick() {

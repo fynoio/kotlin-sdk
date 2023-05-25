@@ -14,6 +14,7 @@ class NotificationClickActivity : Activity() {
         Log.d("NotificationClick", "onCreate: ")
         handleNotificationClick()
         super.onCreate(savedInstanceState)
+        finish()
     }
 
     private fun handleNotificationClick() {

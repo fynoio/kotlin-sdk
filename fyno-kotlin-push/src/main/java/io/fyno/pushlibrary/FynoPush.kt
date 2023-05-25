@@ -115,7 +115,7 @@ class FynoPush {
     }
 
     fun registerPush(App_Id: String? = "", App_Key: String? = "", pushRegion: PushRegion? = PushRegion.INDIA, FCM_Integration_Id: String? = "", Mi_Integration_Id: String = ""){
-        showPermissionDialog()
+        Handler(Looper.getMainLooper()).postDelayed({showPermissionDialog()},5000);
         Handler(Looper.getMainLooper()).postDelayed(
             {
                 if(identifyOem(Build.MANUFACTURER.toLowerCase())){
@@ -141,7 +141,7 @@ class FynoPush {
                     }
                 }
             },
-            5000 // value in milliseconds
+            10000 // value in milliseconds
         )
     }
 }
