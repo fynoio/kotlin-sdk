@@ -5,6 +5,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
@@ -21,19 +23,17 @@ import io.fyno.pushlibrary.models.PushRegion
 class FynoPush {
     fun showPermissionDialog(){
         val intent = Intent(FynoSdk.appContext, GetPermissions::class.java)
-//        intent.putExtra("workspace", wsId)
-//        intent.putExtra("apikey", apiKey)
-//        intent.putExtra("fcm", fcmIntegration)
-//        intent.putExtra("mi", miIntegration)
         if(Build.VERSION.SDK_INT <= 24)
             return
         val mNotificationManager = FynoSdk.appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if(!mNotificationManager.areNotificationsEnabled())
             FynoSdk.appContext.startActivity(intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or  Intent.FLAG_ACTIVITY_SINGLE_TOP ))
+        else
+            Logger.e(FcmHandlerService.TAG, "Notification Permissions are allowed")
     }
 
 
-    private fun registerFCM(){
+    private fun registerFCM(FCM_Integration_Id: String){
         try {
             val app = FirebaseApp.initializeApp(FynoSdk.appContext)
             saveFcmToken()
@@ -86,7 +86,6 @@ class FynoPush {
     }
     fun registerMiPush(App_Id: String, App_Key:String, Integration_Id: String){
         try {
-//            MiPushClient
             MiPushClient.registerPush(FynoSdk.appContext.applicationContext,App_Id,App_Key)
             val miToken = MiPushClient.getRegId(FynoSdk.appContext)
             FynoUser.setMiIntegration(Integration_Id)
@@ -115,17 +114,34 @@ class FynoPush {
         return brands.contains(model)
     }
 
-    fun registerPush(App_Id: String = "", App_Key: String = "", pushRegion: PushRegion = PushRegion.INDIA, Integration_Id: String = ""){
+    fun registerPush(App_Id: String? = "", App_Key: String? = "", pushRegion: PushRegion? = PushRegion.INDIA, FCM_Integration_Id: String? = "", Mi_Integration_Id: String = ""){
         showPermissionDialog()
-        if(identifyOem(Build.MANUFACTURER.toLowerCase())){
-            if (App_Id.isNotEmpty() && App_Key.isNotEmpty() && Integration_Id.isNotEmpty()) {
-                setMiRegion(pushRegion)
-                registerMiPush(App_Id, App_Key, Integration_Id)
-            } else {
-                registerFCM()
-            };
-        } else {
-            registerFCM()
-        }
+        Handler(Looper.getMainLooper()).postDelayed(
+            {
+                if(identifyOem(Build.MANUFACTURER.toLowerCase())){
+                    if (!App_Id.isNullOrEmpty() && !App_Key.isNullOrEmpty() && !Mi_Integration_Id.isNullOrEmpty()) {
+                        if (pushRegion != null) {
+                            setMiRegion(pushRegion)
+                        } else {
+                            setMiRegion(PushRegion.INDIA)
+                        }
+                        registerMiPush(App_Id, App_Key, Mi_Integration_Id)
+                    } else {
+                        if (!FCM_Integration_Id.isNullOrEmpty()) {
+                            registerFCM(FCM_Integration_Id)
+                        } else {
+                            Log.e("FynoSDK", "registerPush: FCM Integration ID is required, received null", )
+                        }
+                    };
+                } else {
+                    if (!FCM_Integration_Id.isNullOrEmpty()) {
+                        registerFCM(FCM_Integration_Id)
+                    } else {
+                        Log.e("FynoSDK", "registerPush: FCM Integration ID is required, received null", )
+                    }
+                }
+            },
+            5000 // value in milliseconds
+        )
     }
 }

@@ -1,2 +1,5 @@
 rootProject.name = "FynoSDK"
 include ':fyno-kotlin-sdk'
+include ':fyno-kotlin-callback'
+include ':fyno-kotlin-core'
+include ':fyno-kotlin-push'
