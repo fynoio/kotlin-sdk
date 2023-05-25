@@ -45,7 +45,7 @@ class FynoSdk {
             return false
         }
 
-        fun initialize(context: Context, WSId: String, integrationId: String, token: String, userId: String?=null) {
+        fun initialize(context: Context, WSId: String, token: String, userId: String?=null) {
             if (WSId.isEmpty()) {
                 throw IllegalArgumentException("Workspace Id is empty")
             }
@@ -58,10 +58,8 @@ class FynoSdk {
             )
             setLogLevel(LogLevel.VERBOSE)
             setString("WS_ID", WSId)
-            setString("INTEGRATION", integrationId)
             setString("SECRET", token)
             FynoUser.setWorkspace(WSId)
-            FynoUser.setFcmIntegration(integrationId)
             FynoUser.setApi(token)
             if(userId.isNullOrBlank() && FynoUser.getIdentity().isNullOrBlank()){
                 val uuid = UUID.randomUUID().toString()
@@ -78,7 +76,7 @@ class FynoSdk {
             }
         }
 
-        fun initialize(context: Context, WSId: String, integrationId: String, token: String) {
+        fun initialize(context: Context, WSId: String, token: String) {
             if (WSId.isEmpty()) {
                 throw IllegalArgumentException("Workspace Id is empty")
             }
@@ -91,10 +89,8 @@ class FynoSdk {
             )
             setLogLevel(LogLevel.VERBOSE)
             setString("WS_ID", WSId)
-            setString("INTEGRATION", integrationId)
             setString("SECRET", token)
             FynoUser.setWorkspace(WSId)
-            FynoUser.setFcmIntegration(integrationId)
             FynoUser.setApi(token)
             if(FynoUser.getIdentity().isNullOrEmpty()){
                 val uuid = UUID.randomUUID().toString()
