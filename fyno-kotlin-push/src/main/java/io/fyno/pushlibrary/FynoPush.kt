@@ -35,6 +35,7 @@ class FynoPush {
 
     private fun registerFCM(FCM_Integration_Id: String){
         try {
+            FynoUser.setFcmIntegration(FCM_Integration_Id)
             val app = FirebaseApp.initializeApp(FynoCore.appContext)
             saveFcmToken()
         } catch (e:Exception) {
