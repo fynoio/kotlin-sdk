@@ -1,11 +1,11 @@
-package io.fyno.kotlin_sdk.helpers
+package io.fyno.core.helpers
 
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import io.fyno.kotlin_sdk.utils.Logger
+import io.fyno.core.utils.Logger
 
 class Config(
     var key: String? = null,

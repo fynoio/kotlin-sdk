@@ -10,7 +10,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import io.fyno.callback.FynoCallback
-import io.fyno.kotlin_sdk.FynoSdk
+import io.fyno.core.FynoCore
 import io.fyno.callback.models.MessageStatus
 import org.json.JSONObject
 
@@ -44,22 +44,22 @@ class NotificationActionClickActivity : AppCompatActivity() {
                 }
             } else {
                 try {
-                    intent = Intent(FynoSdk.appContext, Class.forName(action)).apply {
+                    intent = Intent(FynoCore.appContext, Class.forName(action)).apply {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                     }
                 } catch (e: ClassNotFoundException) {
                     Log.e("ClassNotFound", "onStart: ${e.message}")
-                    intent = FynoSdk.appContext.packageManager.getLaunchIntentForPackage(FynoSdk.appContext.packageName)
+                    intent = FynoCore.appContext.packageManager.getLaunchIntentForPackage(FynoCore.appContext.packageName)
                         ?.apply {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                         }
                 }
 
             }
-            FynoSdk.appContext.applicationContext.startActivity(intent)
+            FynoCore.appContext.applicationContext.startActivity(intent)
         }
         Log.d("NotificationActionClick", "onStart: ")
-        val mNotificationManager = FynoSdk.appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val mNotificationManager = FynoCore.appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         mNotificationManager.cancel(notificationId)
     }
 }

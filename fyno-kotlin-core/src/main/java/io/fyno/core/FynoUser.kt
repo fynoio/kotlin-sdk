@@ -1,8 +1,8 @@
-package io.fyno.kotlin_sdk
+package io.fyno.core
 
 import com.fynoio.pushsdk.utils.FynoUtils
-import io.fyno.kotlin_sdk.helpers.Config
-import io.fyno.kotlin_sdk.utils.FynoContextCreator
+import io.fyno.core.helpers.Config
+import io.fyno.core.utils.FynoContextCreator
 import org.json.JSONObject
 
 object FynoUser {

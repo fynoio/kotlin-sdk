@@ -6,7 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import io.fyno.callback.FynoCallback
-import io.fyno.kotlin_sdk.FynoSdk
+import io.fyno.core.FynoCore
 import io.fyno.callback.models.MessageStatus
 
 class NotificationClickActivity : Activity() {
@@ -35,10 +35,10 @@ class NotificationClickActivity : Activity() {
                 }
             } else {
                 try {
-                    intent = Intent(FynoSdk.appContext, Class.forName(action))
+                    intent = Intent(FynoCore.appContext, Class.forName(action))
                 } catch (e: ClassNotFoundException) {
                     Log.e("ClassNotFound", "onStart: ${e.message}", )
-                    intent = FynoSdk.appContext.packageManager.getLaunchIntentForPackage(FynoSdk.appContext.packageName)
+                    intent = FynoCore.appContext.packageManager.getLaunchIntentForPackage(FynoCore.appContext.packageName)
                 }
 
             }

@@ -1,4 +1,4 @@
-package io.fyno.kotlin_sdk
+package io.fyno.core
 
 import android.util.Log
 import org.json.JSONObject

@@ -1,8 +1,8 @@
 package io.fyno.kotlin_core
 
 import android.content.Context
-import io.fyno.kotlin_sdk.FynoCore
-import io.fyno.kotlin_sdk.utils.LogLevel
+import io.fyno.core.FynoCore
+import io.fyno.core.utils.LogLevel
 import io.fyno.pushlibrary.FynoPush
 import io.fyno.pushlibrary.models.PushRegion
 

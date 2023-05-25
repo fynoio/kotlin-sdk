@@ -1,13 +1,11 @@
-package io.fyno.kotlin_sdk.utils
+package io.fyno.core.utils
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.telephony.TelephonyManager
 import android.util.Log
-import io.fyno.kotlin_sdk.FynoSdk
 
 enum class NetworkType(val networkName: String) {
     WIFI("wifi"),

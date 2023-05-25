@@ -1,4 +1,4 @@
-package io.fyno.kotlin_sdk.utils
+package io.fyno.core.utils
 
 object FynoConstants {
     const val PUSH_VENDOR_FCM = "fcm"

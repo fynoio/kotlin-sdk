@@ -1,12 +1,6 @@
 package com.fynoio.pushsdk.utils
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.content.res.Resources
-import android.graphics.drawable.Drawable
-import io.fyno.kotlin_sdk.utils.FynoConstants
-import org.json.JSONObject
-import java.util.*
+import io.fyno.core.utils.FynoConstants
 
 class FynoUtils {
     fun getEndpoint(event: String, ws: String, env: String? = "test", profile: String? = null, newId: String? = null): String {

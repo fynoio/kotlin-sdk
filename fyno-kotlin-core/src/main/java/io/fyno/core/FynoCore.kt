@@ -1,19 +1,17 @@
-package io.fyno.kotlin_sdk
+package io.fyno.core
 
-import android.annotation.SuppressLint
 import android.content.*
 import android.util.Log
 import com.fynoio.pushsdk.utils.FynoUtils
-import io.fyno.kotlin_sdk.helpers.SQLDataHelper
-import io.fyno.kotlin_sdk.utils.FynoContextCreator
-import io.fyno.kotlin_sdk.utils.LogLevel
-import io.fyno.kotlin_sdk.utils.Logger
-import io.fyno.kotlin_sdk.utils.NetworkDetails
+import io.fyno.core.utils.FynoContextCreator
+import io.fyno.core.utils.LogLevel
+import io.fyno.core.utils.Logger
+import io.fyno.core.utils.NetworkDetails
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.*
 
-class FynoSdk {
+class FynoCore {
     companion object {
         val TAG = "FynoSDK"
         lateinit var appContext: Context
@@ -124,7 +122,7 @@ class FynoSdk {
                     }
                 }
             } catch (e: Exception) {
-                Logger.e(FynoSdk.TAG, "Unable to update user profile", e)
+                Logger.e(FynoCore.TAG, "Unable to update user profile", e)
             }
         }
         private fun getParamsObj(uniqueId: String): JSONObject {

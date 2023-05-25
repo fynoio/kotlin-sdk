@@ -1,8 +1,8 @@
-package io.fyno.kotlin_sdk.utils
+package io.fyno.core.utils
 
 import android.annotation.SuppressLint
 import android.content.Context
-import io.fyno.kotlin_sdk.helpers.SQLDataHelper
+import io.fyno.core.helpers.SQLDataHelper
 
 @SuppressLint("StaticFieldLeak")
 object FynoContextCreator {

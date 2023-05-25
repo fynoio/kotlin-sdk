@@ -13,21 +13,21 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.xiaomi.channel.commonutils.android.Region
 import com.xiaomi.channel.commonutils.logger.LoggerInterface
 import com.xiaomi.mipush.sdk.MiPushClient
-import io.fyno.kotlin_sdk.FynoSdk
-import io.fyno.kotlin_sdk.FynoUser
-import io.fyno.kotlin_sdk.utils.Logger
+import io.fyno.core.FynoCore
+import io.fyno.core.FynoUser
+import io.fyno.core.utils.Logger
 import io.fyno.pushlibrary.firebase.FcmHandlerService
 import io.fyno.pushlibrary.mipush.MiPushHelper
 import io.fyno.pushlibrary.models.PushRegion
 
 class FynoPush {
     fun showPermissionDialog(){
-        val intent = Intent(FynoSdk.appContext, GetPermissions::class.java)
+        val intent = Intent(FynoCore.appContext, GetPermissions::class.java)
         if(Build.VERSION.SDK_INT <= 24)
             return
-        val mNotificationManager = FynoSdk.appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val mNotificationManager = FynoCore.appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if(!mNotificationManager.areNotificationsEnabled())
-            FynoSdk.appContext.startActivity(intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or  Intent.FLAG_ACTIVITY_SINGLE_TOP ))
+            FynoCore.appContext.startActivity(intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or  Intent.FLAG_ACTIVITY_SINGLE_TOP ))
         else
             Logger.e(FcmHandlerService.TAG, "Notification Permissions are allowed")
     }
@@ -35,7 +35,7 @@ class FynoPush {
 
     private fun registerFCM(FCM_Integration_Id: String){
         try {
-            val app = FirebaseApp.initializeApp(FynoSdk.appContext)
+            val app = FirebaseApp.initializeApp(FynoCore.appContext)
             saveFcmToken()
         } catch (e:Exception) {
             Logger.e(FcmHandlerService.TAG,"Unable to register FCM", e)
@@ -52,11 +52,11 @@ class FynoPush {
                     )
                 }
                 val token = task.result
-                Logger.i(FynoSdk.TAG, "Fetching FCM registration token: $token")
+                Logger.i(FynoCore.TAG, "Fetching FCM registration token: $token")
                 FynoUser.setFcmToken(token)
             }
         } catch (e: Exception) {
-            e.message?.let { Log.e(FynoSdk.TAG, it) }
+            e.message?.let { Log.e(FynoCore.TAG, it) }
         }
     }
     fun setMiRegion(region: PushRegion){
@@ -76,21 +76,21 @@ class FynoPush {
                     miRegion = Region.Global
                 }
                 else -> {
-                    Logger.e(FynoSdk.TAG +"MiHelper", "setMiRegion: Region not found, Mi supports India,Europe,Russia and Global regions")
+                    Logger.e(FynoCore.TAG +"MiHelper", "setMiRegion: Region not found, Mi supports India,Europe,Russia and Global regions")
                 }
             }
             MiPushClient.setRegion(miRegion)
         } catch (e: Exception) {
-            Logger.e(FynoSdk.TAG +"MiHelper", "setMiRegion: Failed to set region",e)
+            Logger.e(FynoCore.TAG +"MiHelper", "setMiRegion: Failed to set region",e)
         }
     }
     fun registerMiPush(App_Id: String, App_Key:String, Integration_Id: String){
         try {
-            MiPushClient.registerPush(FynoSdk.appContext.applicationContext,App_Id,App_Key)
-            val miToken = MiPushClient.getRegId(FynoSdk.appContext)
+            MiPushClient.registerPush(FynoCore.appContext.applicationContext,App_Id,App_Key)
+            val miToken = MiPushClient.getRegId(FynoCore.appContext)
             FynoUser.setMiIntegration(Integration_Id)
             FynoUser.setMiToken(miToken)
-            com.xiaomi.mipush.sdk.Logger.setLogger(FynoSdk.appContext, object : LoggerInterface {
+            com.xiaomi.mipush.sdk.Logger.setLogger(FynoCore.appContext, object : LoggerInterface {
                 override fun setTag(tag: String?) {
                     Logger.i(MiPushHelper.TAG, "XMPushTag : $tag")
                 }
@@ -103,9 +103,9 @@ class FynoPush {
                     Logger.e(MiPushHelper.TAG, "$message", throwable)
                 }
             })
-            Logger.i("MiToken", "Mi Push token registered: "+ MiPushClient.getRegId(FynoSdk.appContext))
+            Logger.i("MiToken", "Mi Push token registered: "+ MiPushClient.getRegId(FynoCore.appContext))
         } catch (e: Exception) {
-            Logger.e("MiToken", "Mi Push token registered: "+ MiPushClient.getRegId(FynoSdk.appContext))
+            Logger.e("MiToken", "Mi Push token registered: "+ MiPushClient.getRegId(FynoCore.appContext))
         }
     }
 
