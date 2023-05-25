@@ -1,4 +1,4 @@
-package io.fyno.kotlin_core
+package io.fyno.kotlin_sdk
 
 import org.junit.Test
 

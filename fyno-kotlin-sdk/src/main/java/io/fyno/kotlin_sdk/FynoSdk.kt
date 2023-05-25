@@ -1,4 +1,4 @@
-package io.fyno.kotlin_core
+package io.fyno.kotlin_sdk
 
 import android.content.Context
 import io.fyno.core.FynoCore

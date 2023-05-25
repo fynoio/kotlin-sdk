@@ -1,4 +1,4 @@
-package io.fyno.kotlin_core
+package io.fyno.kotlin_sdk
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
