@@ -41,15 +41,17 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-reflect:1.8.20'
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            release(MavenPublication) {
-                from components.release
-                groupId = 'io.fyno'
-                artifactId = 'core'
-                version = '1.0.0'
-            }
-        }
-    }
-}
+//afterEvaluate {
+//    publishing {
+//        publications {
+//            release(MavenPublication) {
+//                from components.release
+//                groupId = 'io.fyno'
+//                artifactId = 'core'
+//                version = '1.0.0'
+//            }
+//        }
+//    }
+//}
+
+apply from:'maven-push.gradle'

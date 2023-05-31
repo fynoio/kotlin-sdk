@@ -43,37 +43,6 @@ class FynoCore {
             return false
         }
 
-        fun initialize(context: Context, WSId: String, token: String, userId: String?=null) {
-            if (WSId.isEmpty()) {
-                throw IllegalArgumentException("Workspace Id is empty")
-            }
-            appContext = context
-            FynoContextCreator.context = context
-            NetworkDetails.getNetworkType()
-            fynoPreferences = context.getSharedPreferences(
-                context.packageName + "-" + "fynoio",
-                ContextWrapper.MODE_PRIVATE
-            )
-            setLogLevel(LogLevel.VERBOSE)
-            setString("WS_ID", WSId)
-            setString("SECRET", token)
-            FynoUser.setWorkspace(WSId)
-            FynoUser.setApi(token)
-            if(userId.isNullOrBlank() && FynoUser.getIdentity().isNullOrBlank()){
-                val uuid = UUID.randomUUID().toString()
-                Thread(Runnable {
-                    RequestHandler.requestPOST(FynoUtils().getEndpoint("create_profile", FynoUser.getWorkspace()), JSONObject().put("distinct_id", uuid), "POST")
-                    identify(uuid)
-                    setFlag("isDirty", true)
-                }).start()
-            } else if(userId != null && userId.isNotEmpty()){
-                Thread(Runnable {
-                    RequestHandler.requestPOST(FynoUtils().getEndpoint("upsert_profile", FynoUser.getWorkspace(), profile = userId), getParamsObj(userId), "PUT")
-                    setFlag("isDirty", false)
-                }).start()
-            }
-        }
-
         fun initialize(context: Context, WSId: String, token: String) {
             if (WSId.isEmpty()) {
                 throw IllegalArgumentException("Workspace Id is empty")
@@ -85,11 +54,12 @@ class FynoCore {
                 context.packageName + "-" + "fynoio",
                 ContextWrapper.MODE_PRIVATE
             )
-            setLogLevel(LogLevel.VERBOSE)
             setString("WS_ID", WSId)
             setString("SECRET", token)
+//            setString("INTEGRATION", integrationId)
             FynoUser.setWorkspace(WSId)
             FynoUser.setApi(token)
+//            FynoUser.setFynoIntegration(integrationId)
             if(FynoUser.getIdentity().isNullOrEmpty()){
                 val uuid = UUID.randomUUID().toString()
                 Thread(Runnable {
