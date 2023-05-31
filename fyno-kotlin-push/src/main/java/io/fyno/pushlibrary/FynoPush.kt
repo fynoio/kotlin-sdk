@@ -115,28 +115,28 @@ class FynoPush {
         return brands.contains(model)
     }
 
-    fun registerPush(App_Id: String? = "", App_Key: String? = "", pushRegion: PushRegion? = PushRegion.INDIA, FCM_Integration_Id: String? = "", Mi_Integration_Id: String = ""){
+    fun registerPush(App_Id: String? = "", App_Key: String? = "", pushRegion: PushRegion? = PushRegion.INDIA, Fyno_Integration_Id: String = ""){
         Handler(Looper.getMainLooper()).postDelayed({showPermissionDialog()},5000);
         Handler(Looper.getMainLooper()).postDelayed(
             {
                 if(identifyOem(Build.MANUFACTURER.toLowerCase())){
-                    if (!App_Id.isNullOrEmpty() && !App_Key.isNullOrEmpty() && !Mi_Integration_Id.isNullOrEmpty()) {
+                    if (!App_Id.isNullOrEmpty() && !App_Key.isNullOrEmpty() && !Fyno_Integration_Id.isNullOrEmpty()) {
                         if (pushRegion != null) {
                             setMiRegion(pushRegion)
                         } else {
                             setMiRegion(PushRegion.INDIA)
                         }
-                        registerMiPush(App_Id, App_Key, Mi_Integration_Id)
+                        registerMiPush(App_Id, App_Key, Fyno_Integration_Id)
                     } else {
-                        if (!FCM_Integration_Id.isNullOrEmpty()) {
-                            registerFCM(FCM_Integration_Id)
+                        if (!Fyno_Integration_Id.isNullOrEmpty()) {
+                            registerFCM(Fyno_Integration_Id)
                         } else {
                             Log.e("FynoSDK", "registerPush: FCM Integration ID is required, received null", )
                         }
                     };
                 } else {
-                    if (!FCM_Integration_Id.isNullOrEmpty()) {
-                        registerFCM(FCM_Integration_Id)
+                    if (!Fyno_Integration_Id.isNullOrEmpty()) {
+                        registerFCM(Fyno_Integration_Id)
                     } else {
                         Log.e("FynoSDK", "registerPush: FCM Integration ID is required, received null", )
                     }

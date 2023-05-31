@@ -15,8 +15,8 @@ class FynoSdk {
                 FynoCore.initialize(context, workspaceId, token, userId)
         }
 
-        fun registerPush(xiaomiApplicationId: String? = "", xiaomiApplicationKey: String? = "", pushRegion: PushRegion? = PushRegion.INDIA, fcmIntegration: String? = "", miIntegration: String = ""){
-            FynoPush().registerPush(xiaomiApplicationId, xiaomiApplicationKey, pushRegion, fcmIntegration, miIntegration)
+        fun registerPush(xiaomiApplicationId: String? = "", xiaomiApplicationKey: String? = "", pushRegion: PushRegion? = PushRegion.INDIA, fcmIntegration: String = "", miIntegration: String = ""){
+            FynoPush().registerPush(xiaomiApplicationId, xiaomiApplicationKey, pushRegion,fcmIntegration)
         }
 
         fun identify(uniqueId: String) {

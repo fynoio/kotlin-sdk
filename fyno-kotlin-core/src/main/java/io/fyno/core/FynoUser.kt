@@ -29,7 +29,7 @@ object FynoUser {
     }
     fun setMiToken(token: String) {
         FynoContextCreator.sqlDataHelper.insert_configByKey(Config(key = "fyno_xiomi_token", value = token))
-        if(!getIdentity().isNullOrEmpty() && !getWorkspace().isNullOrEmpty()){
+        if(getIdentity().isNotEmpty() && getWorkspace().isNotEmpty()){
             Thread(Runnable {
                 RequestHandler.requestPOST(FynoUtils().getEndpoint("update_channel", getWorkspace(), profile = getIdentity()),
                     JSONObject("{channel: {push: [{token: 'mi_token:$token',integration_id: ${getMiIntegration().toString()}, status: 0}]}}")
@@ -82,6 +82,12 @@ object FynoUser {
     }
     fun getWorkspace(): String {
         return (FynoContextCreator.sqlDataHelper.getconfigByKey("fyno_wsid").value.toString())
+    }
+    fun setFynoIntegration(integrationId: String) {
+        FynoContextCreator.sqlDataHelper.insert_configByKey(Config(key = "fyno_integration_id", value = integrationId))
+    }
+    fun getFynoIntegration(): String {
+        return (FynoContextCreator.sqlDataHelper.getconfigByKey("fyno_integration_id").value.toString())
     }
     fun setFcmIntegration(integrationId: String) {
         FynoContextCreator.sqlDataHelper.insert_configByKey(Config(key = "fyno_fcm_integration_id", value = integrationId))

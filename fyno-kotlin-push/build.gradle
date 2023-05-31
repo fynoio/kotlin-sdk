@@ -12,7 +12,6 @@ android {
         targetSdk 33
         versionCode 1
         versionName "1.0.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -36,8 +35,8 @@ android {
 }
 
 dependencies {
-    compileOnly project(path: ':fyno-kotlin-callback')
-    compileOnly project(path: ':fyno-kotlin-core')
+    implementation 'io.fyno.kotlin-sdk:callback:1.0.0'
+    implementation 'io.fyno.kotlin-sdk:core:1.0.0'
     compileOnly fileTree(include: ["*.jar", "*.aar"], dir: "libs")
     implementation 'com.google.firebase:firebase-messaging-ktx:23.1.2'
     implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -52,15 +51,17 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-reflect:1.8.20'
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            release(MavenPublication) {
-                from components.release
-                groupId = 'io.fyno'
-                artifactId = 'pushlibrary'
-                version = '1.0.0'
-            }
-        }
-    }
-}
+//afterEvaluate {
+//    publishing {
+//        publications {
+//            release(MavenPublication) {
+//                from components.release
+//                groupId = 'io.fyno'
+//                artifactId = 'pushlibrary'
+//                version = '1.0.0'
+//            }
+//        }
+//    }
+//}
+
+apply from: 'maven-push.gradle'
