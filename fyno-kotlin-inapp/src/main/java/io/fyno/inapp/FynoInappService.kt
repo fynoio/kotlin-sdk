@@ -66,12 +66,12 @@ open class FynoInappService : Service() {
     }
 
     open fun markAll(){
-        mSocket.emit("markAll:read",JSONObject("{\"filter\":\"all\",\"page\":$page}"))
+        mSocket.emit("markAll:read")
         page = page + 1
     }
 
     open fun deleteAll(){
-        mSocket.emit("markAll:delete",JSONObject("{\"filter\":\"all\",\"page\":$page}"))
+        mSocket.emit("markAll:delete")
         page = page + 1
     }
 
