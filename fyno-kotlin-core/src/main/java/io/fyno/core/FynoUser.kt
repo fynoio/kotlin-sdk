@@ -107,4 +107,12 @@ object FynoUser {
     fun getApi(): String {
         return (FynoContextCreator.sqlDataHelper.getconfigByKey("fyno_ws_secret").value.toString())
     }
+
+    fun setUserName(name: String) {
+        FynoContextCreator.sqlDataHelper.insert_configByKey(Config(key = "fyno_user_name", value = name))
+    }
+
+    fun getUserName(): String {
+        return FynoContextCreator.sqlDataHelper.getconfigByKey("fyno_user_name").value.toString()
+    }
 }
