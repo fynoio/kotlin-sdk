@@ -70,11 +70,14 @@ class FynoCore {
             }
         }
 
-        fun identify(uniqueId: String, update: Boolean? = true) {
+        fun identify(uniqueId: String,name: String?="", update: Boolean? = true) {
             try {
                 val oldDistinctId = FynoUser.getIdentity()
                 if (oldDistinctId == uniqueId) {
                     return
+                }
+                if(!name.isNullOrBlank()){
+                    Fyno
                 }
                 FynoUser.identify(uniqueId)
                 Log.d(TAG, "identify: $uniqueId, $oldDistinctId")

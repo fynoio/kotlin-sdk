@@ -14,6 +14,7 @@ open class FynoInappService : Service() {
     var isNotified = false;
     lateinit var listener: InAppListener
     lateinit var mSocket: Socket
+    var page = 1
     override fun onBind(intent: Intent?): IBinder? {
         TODO("Not yet implemented")
     }
@@ -37,7 +38,8 @@ open class FynoInappService : Service() {
                 Log.d(TAG, "initSocket: Message Received ${notificationContent.toString()}")
                 handleFynoMessageReceived(notificationContent)
             }.on("connectionSuccess"){
-                mSocket.emit("get:messages",JSONObject("{\"filter\":\"all\",\"page\":1}"))
+                mSocket.emit("get:messages",JSONObject("{\"filter\":\"all\",\"page\":$page}"))
+                page = page + 1
             }.on("messages:state"){
                 Log.d(TAG, "Incoming Messages: ${it[0]}")
             }.on("statusUpdated"){
@@ -56,5 +58,28 @@ open class FynoInappService : Service() {
 
     open fun handleFynoMessageReceived(remoteMessage: JSONObject){
         listener.onMessageReceived(remoteMessage)
+    }
+
+    open fun loadMore(){
+        mSocket.emit("get:messages",JSONObject("{\"filter\":\"all\",\"page\":$page}"))
+        page = page + 1
+    }
+
+    open fun markAll(){
+        mSocket.emit("markAll:read",JSONObject("{\"filter\":\"all\",\"page\":$page}"))
+        page = page + 1
+    }
+
+    open fun deleteAll(){
+        mSocket.emit("markAll:delete",JSONObject("{\"filter\":\"all\",\"page\":$page}"))
+        page = page + 1
+    }
+
+    open fun markMessage(msg) {
+        mSocket.emit("message:read", msg)
+    }
+
+    open fun deleteMessage(msg) {
+        mSocket.emit("message:deleted", msg)
     }
 }
