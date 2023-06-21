@@ -16,7 +16,7 @@ open class FynoInappService : Service() {
     lateinit var mSocket: Socket
     var page = 1
     override fun onBind(intent: Intent?): IBinder? {
-        TODO("Not yet implemented")
+        // TODO("Not yet implemented")
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -52,34 +52,48 @@ open class FynoInappService : Service() {
     }
 
     open fun notify(remoteMessage: JSONObject) {
-        Log.d("In-FynoSDK", "handleFynoMessageReceived: ${remoteMessage.toString()}")
-        NotificationHelper.renderInappMessage(this, remoteMessage.toString())
+        if(mSocket.isActive) {
+            Log.d("In-FynoSDK", "handleFynoMessageReceived: ${remoteMessage.toString()}")
+            NotificationHelper.renderInappMessage(this, remoteMessage.toString())
+        }
     }
 
     open fun handleFynoMessageReceived(remoteMessage: JSONObject){
-        listener.onMessageReceived(remoteMessage)
+        if(mSocket.isActive) {
+            listener.onMessageReceived(remoteMessage)
+        }
     }
 
     open fun loadMore(){
-        mSocket.emit("get:messages",JSONObject("{\"filter\":\"all\",\"page\":$page}"))
-        page = page + 1
+        if(mSocket.isActive) {
+            mSocket.emit("get:messages", JSONObject("{\"filter\":\"all\",\"page\":$page}"))
+            page = page + 1
+        }
     }
 
     open fun markAll(){
-        mSocket.emit("markAll:read")
-        page = page + 1
+        if(mSocket.isActive) {
+            mSocket.emit("markAll:read")
+            page = page + 1
+        }
     }
 
     open fun deleteAll(){
-        mSocket.emit("markAll:delete")
-        page = page + 1
+        if(mSocket.isActive) {
+            mSocket.emit("markAll:delete")
+            page = page + 1
+        }
     }
 
     open fun markMessage(msg) {
-        mSocket.emit("message:read", msg)
+        if(mSocket.isActive) {
+            mSocket.emit("message:read", msg)
+        }
     }
 
     open fun deleteMessage(msg) {
-        mSocket.emit("message:deleted", msg)
+        if(mSocket.isActive) {
+            mSocket.emit("message:deleted", msg)
+        }
     }
 }
