@@ -1,2 +1,4 @@
-rootProject.name = "FynoSDK"
-include ':fyno-kotlin-sdk'
+rootProject.name = "kotlin-sdk"
+include ':kotlinsdk'
+include ':notification-center'
+include ':notificationinbox'
