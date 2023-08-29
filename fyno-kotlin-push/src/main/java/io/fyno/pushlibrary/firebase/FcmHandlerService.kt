@@ -5,8 +5,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import io.fyno.callback.FynoCallback
 import io.fyno.callback.models.MessageStatus
-import io.fyno.kotlin_sdk.FynoUser
-import io.fyno.kotlin_sdk.utils.FynoContextCreator
+import io.fyno.core.utils.FynoContextCreator
 import io.fyno.pushlibrary.helper.NotificationHelper.renderFCMMessage
 import io.fyno.pushlibrary.helper.NotificationHelper.isFynoMessage
 import io.fyno.pushlibrary.helper.NotificationHelper.rawMessage

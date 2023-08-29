@@ -6,9 +6,8 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.util.Log
 import io.fyno.callback.models.MessageStatus
-import io.fyno.callback.utils.NetworkDetails
-import io.fyno.kotlin_sdk.FynoUser
-import io.fyno.kotlin_sdk.RequestHandler
+import io.fyno.core.FynoUser
+import io.fyno.core.RequestHandler
 import org.json.JSONObject
 import java.util.*
 

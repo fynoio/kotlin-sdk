@@ -6,7 +6,7 @@ import android.util.Log
 import com.xiaomi.mipush.sdk.*
 import io.fyno.callback.FynoCallback
 import io.fyno.callback.models.MessageStatus
-import io.fyno.kotlin_sdk.FynoUser
+import io.fyno.core.FynoUser
 import io.fyno.pushlibrary.helper.NotificationHelper
 import io.fyno.pushlibrary.helper.NotificationHelper.isFynoMessage
 import io.fyno.pushlibrary.helper.NotificationHelper.rawMessage
