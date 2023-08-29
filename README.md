@@ -40,7 +40,7 @@ allprojects {
 Add following line inside dependencies {} in app build gradle
 
 ```kotlin
-implementation 'com.github.fynoio:kotlin-sdk:1.0.0'
+implementation 'io.fyno.kotlin-sdk:1.0.0'
 ```
 
 <sup>[check the latest version here](https://jitpack.io/#fynoio/kotlin-sdk)</sup>
@@ -81,7 +81,7 @@ Add following line inside dependencies {...} in app build gradle
 ```kotlin
 dependencies{
     ...
-    implementation 'com.github.fynoio.kotlin-sdk:core:1.0.0'
+    implementation 'io.fyno.kotlin-sdk:core:1.0.0'
 }
 ```
 
@@ -102,7 +102,7 @@ Add following line inside dependencies {} in app build gradle
 ```kotlin
 dependencies{
     ...
-    implementation 'com.github.fynoio.kotlin-sdk:pushlibrary:1.0.0'
+    implementation 'io.fyno.kotlin-sdk:pushlibrary:1.0.0'
 }
 ```
 
@@ -133,7 +133,7 @@ Add following line inside dependencies {} in app build gradle
 ```kotlin
 dependencies{
     ...
-    implementation 'com.github.fynoio.kotlin-sdk:callback:1.0.0'
+    implementation 'io.fyno.kotlin-sdk:callback:1.0.0'
 }
 ```
 
