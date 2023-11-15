@@ -5,7 +5,7 @@ class Global {
     static def POM_NAME = 'Kotlin Callback SDK'
     static def POM_ARTIFACT_ID = 'callback'
     static def POM_PACKAGING = 'aar'
-    static def VERSION_NAME = '0.0.1'
+    static def VERSION_NAME = '1.0.3'
 
     static def GROUP_ID = 'io.fyno.kotlin-sdk'
     static def POM_DESCRIPTION = 'Fyno Callbacks Library'
@@ -19,7 +19,7 @@ class Global {
     static def POM_DEVELOPER_ID = 'fynoio'
     static def POM_DEVELOPER_NAME = 'Sai Vinod K'
     static def SNAPSHOT_REPOSITORY_URL = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
-    static def RELEASE_REPOSITORY_URL = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2'
+    static def RELEASE_REPOSITORY_URL = 'https://s01.oss.sonatype.org/content/repositories/releases/'
 }
 
 def getRepositoryUsername() {

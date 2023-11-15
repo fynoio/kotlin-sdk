@@ -37,7 +37,8 @@ data class RawMessage(
     // Actions
     val actions: List<Actions>? = null,
     val callback: String?= null,
-    val template: String?= null
+    val template: String?= null,
+    val additional_data: String? = null
 
 ): Serializable {
     fun getNotificationModel(): NotificationModel {
@@ -80,7 +81,8 @@ data class RawMessage(
                     Actions -> Actions.copy(id = (index + 1).toString(), notificationActionType = NotificationActionType.BUTTON )
             },
             callback = callback,
-            template = template
+            template = template,
+            additional_data = additional_data
         )
 
         NotificationModel = if (!imageUrl.isNullOrBlank()) {
@@ -116,8 +118,9 @@ data class NotificationModel(
     val bigText: BigText? = null,
     val bigPicture: BigPicture? = null,
     val actions: List<Actions>? = null,
-    val callback: String?= null,
-    val template: String?= null
+    val callback: String? = null,
+    val template: String? = null,
+    val additional_data: String?
 ) {
     fun getNotificationBodyAction(): Actions {
         val action = BasicNotification.action
@@ -182,6 +185,7 @@ data class BasicNotification(
     val timeoutAfter: Long? = null,
     val showWhenTimeStamp: Boolean? = null,
     val whenTimeStamp: Long? = null,
+    val additional_data: MutableMap<String, String>? = null
 )
 
 data class BigText(

@@ -1,4 +1,8 @@
-rootProject.name = "kotlin-sdk"
-include ':kotlinsdk'
-include ':notification-center'
-include ':notificationinbox'
+rootProject.name = "WeatherApp"
+include ':app'
+include ':fyno-kotlin-core'
+include ':fyno-kotlin-push'
+include ':fyno-kotlin-sdk'
+include ':fyno-kotlin-callback'
+include ':java-sdk'
+include ':fyno-kotlin-inapp'
