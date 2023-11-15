@@ -11,6 +11,7 @@ import io.fyno.pushlibrary.helper.NotificationHelper
 import io.fyno.pushlibrary.helper.NotificationHelper.isFynoMessage
 import io.fyno.pushlibrary.helper.NotificationHelper.rawMessage
 import org.json.JSONObject
+import io.fyno.core.utils.Logger
 
 
 class MiPushHelper : PushMessageReceiver() {
@@ -27,7 +28,11 @@ class MiPushHelper : PushMessageReceiver() {
 
     //Process transparent messages
     override fun onReceivePassThroughMessage(context: Context, message: MiPushMessage) {
-        mMessage = message.content
+        val mMessage = message.content
+        var mTopic: String? = null
+        var mAlias: String? = null
+        var mUserAccount: String? = null
+
         if (!TextUtils.isEmpty(message.topic)) {
             mTopic = message.topic
         } else if (!TextUtils.isEmpty(message.alias)) {
@@ -35,9 +40,12 @@ class MiPushHelper : PushMessageReceiver() {
         } else if (!TextUtils.isEmpty(message.userAccount)) {
             mUserAccount = message.userAccount
         }
-        Log.d("MIReceived", "onReceivePassThroughMessage: ${mMessage.toString()} $mAlias and $mUserAccount")
-        if(message.isFynoMessage())
+
+        Logger.d(TAG, "onReceivePassThroughMessage: ${mMessage.toString()} $mAlias and $mUserAccount")
+
+        if (message.isFynoMessage()) {
             NotificationHelper.renderXiaomiMessage(context, message.rawMessage())
+        }
     }
 
     //Process the clicks of customized notification messages
@@ -55,13 +63,15 @@ class MiPushHelper : PushMessageReceiver() {
     }
 
     override fun onNotificationMessageArrived(context: Context, message: MiPushMessage) {
-        Log.d("MIReceived", "onReceivePushMessage: $message")
-        if(message.isFynoMessage())
-        NotificationHelper.renderXiaomiMessage(context, message.rawMessage())
-        else {
-            FynoCallback().updateStatus(JSONObject(message.content).getString("callback"),
-                MessageStatus.RECEIVED)
-            return
+        Logger.d(TAG, "onReceivePushMessage: $message")
+
+        if (message.isFynoMessage()) {
+            NotificationHelper.renderXiaomiMessage(context, message.rawMessage())
+        } else {
+            val callback = JSONObject(message.content).optString("callback")
+            if (!callback.isNullOrBlank()) {
+                FynoCallback().updateStatus(callback, MessageStatus.RECEIVED)
+            }
         }
     }
 
@@ -106,7 +116,7 @@ class MiPushHelper : PushMessageReceiver() {
         if (MiPushClient.COMMAND_REGISTER == command) {
             if (message.resultCode == ErrorCode.SUCCESS.toLong()) {
                 mRegId = cmdArg1
-                Log.d(TAG, "onReceiveRegisterResult: $mRegId")
+                Logger.d(TAG, "onReceiveRegisterResult: $mRegId")
                 mRegId?.let { FynoUser.setMiToken(it) }
             }
         }

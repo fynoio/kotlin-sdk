@@ -1,11 +1,13 @@
 package io.fyno.core.utils
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.telephony.TelephonyManager
 import android.util.Log
+
 
 enum class NetworkType(val networkName: String) {
     WIFI("wifi"),
@@ -19,13 +21,42 @@ enum class NetworkType(val networkName: String) {
 }
 
 object NetworkDetails {
+    fun getConnectionType(context: Context): Int {
+        var result = 0 // Returns connection type. 0: none; 1: mobile data; 2: wifi; 3: vpn
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager?
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            cm?.run {
+                cm.getNetworkCapabilities(cm.activeNetwork)?.run {
+                    if (hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                        result = 2
+                    } else if (hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                        result = 1
+                    } else if (hasTransport(NetworkCapabilities.TRANSPORT_VPN)){
+                        result = 3
+                    }
+                }
+            }
+        } else {
+            cm?.run {
+                cm.activeNetworkInfo?.run {
+                    if (type == ConnectivityManager.TYPE_WIFI) {
+                        result = 2
+                    } else if (type == ConnectivityManager.TYPE_MOBILE) {
+                        result = 1
+                    } else if(type == ConnectivityManager.TYPE_VPN) {
+                        result = 3
+                    }
+                }
+            }
+        }
+        return result
+    }
     fun getNetworkType(): NetworkType {
         val context = FynoContextCreator.context
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val currentNetwork = cm.activeNetwork
-        val capabilities = cm.getNetworkCapabilities(currentNetwork)
-        val linkProperties = cm.getLinkProperties(currentNetwork)
-        Log.i("FynoUtils", "getNetworkType: ${currentNetwork.toString()} ~~~~~~~ ${capabilities.toString()} ~~~~~~~~~~ ${linkProperties.toString()}")
+        val currentNetwork = getConnectionType(context)
+//        val capabilities = cm.getNetworkCapabilities(currentNetwork)
+//        val linkProperties = cm.getLinkProperties(currentNetwork)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             cm.run {
                 cm.getNetworkCapabilities(cm.activeNetwork)?.run {
@@ -82,21 +113,23 @@ object NetworkDetails {
         return NetworkType.UNKNOWN
     }
 
-    fun isOnline(): Boolean {
-        val context = FynoContextCreator.context
-        val connectivityMgr = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-            return connectivityMgr.activeNetworkInfo != null
-
-        } else {
-            for (network in connectivityMgr.allNetworks) {
-                val networkCapabilities: NetworkCapabilities? = connectivityMgr.getNetworkCapabilities(network)
-                return (networkCapabilities!!.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-                        networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) &&
-                        (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) || networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)))
-            }
-        }
-        return false
+    fun isOnline(context: Context): Boolean {
+//        val connectivityMgr = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+//
+//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+//            return connectivityMgr.activeNetworkInfo != null
+//
+//        } else {
+//            for (network in connectivityMgr.allNetworks) {
+//                val networkCapabilities: NetworkCapabilities? = connectivityMgr.getNetworkCapabilities(network)
+//                return (networkCapabilities!!.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+//                        networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) &&
+//                        (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) || networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)))
+//            }
+//        }
+//        return false
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        @SuppressLint("MissingPermission") val netInfo = cm.activeNetworkInfo
+        return netInfo != null && netInfo.isConnected
     }
 }

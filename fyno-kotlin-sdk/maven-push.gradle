@@ -5,9 +5,9 @@ class Global {
     static def POM_NAME = 'Fyno SDK'
     static def POM_ARTIFACT_ID = 'kotlin-sdk'
     static def POM_PACKAGING = 'aar'
-    static def VERSION_NAME = '0.0.1'
+    static def VERSION_NAME = '1.0.8-sentry'
 
-    static def GROUP_ID = 'io.fyno'
+    static def GROUP_ID = 'io.fyno.kotlin-sdk'
     static def POM_DESCRIPTION = 'Fyno SDK'
     static def POM_URL = 'https://github.com/fynoio/kotlin-sdk'
     static def POM_SCM_URL = 'https://github.com/fynoio/kotlin-sdk'
@@ -19,7 +19,7 @@ class Global {
     static def POM_DEVELOPER_ID = 'fynoio'
     static def POM_DEVELOPER_NAME = 'Sai Vinod K'
     static def SNAPSHOT_REPOSITORY_URL = 'https://s01.oss.sonatype.org/content/repositories/snapshots'
-    static def RELEASE_REPOSITORY_URL = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2'
+    static def RELEASE_REPOSITORY_URL = 'https://s01.oss.sonatype.org/content/repositories/releases'
     static def STAGING_REPOSITORY_URL = 'https://s01.oss.sonatype.org/content/groups/staging'
 }
 

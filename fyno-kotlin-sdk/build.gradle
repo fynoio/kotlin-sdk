@@ -9,7 +9,7 @@ android {
     compileSdk 33
 
     defaultConfig {
-        minSdk 27
+        minSdk 21
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -35,11 +35,16 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
-    implementation project(path: ':fyno-kotlin-core')
+//    implementation 'io.fyno.kotlin-sdk:core:1.0.10-sentry'
+//    implementation 'io.fyno.kotlin-sdk:pushlibrary:1.0.10-sentry'
     implementation project(path: ':fyno-kotlin-push')
+    implementation project(path: ':fyno-kotlin-core')
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.8.22'
+//    implementation("io.sentry:sentry-android:6.32.0")
+
 }
 
 
