@@ -18,20 +18,22 @@ class SQLDataHelper(context: Context?) :
     private val db: SQLiteDatabase = writableDatabase
 
     override fun onCreate(db: SQLiteDatabase) {
+        val createTableQuery = "CREATE TABLE api_responses (id INTEGER PRIMARY KEY, data TEXT)"
         val query =
-            "CREATE TABLE " + TABLENAME_config + " (" + config_Id + " INTEGER PRIMARY KEY AUTOINCREMENT," + config_Key + " TEXT ," + config_Value + " TEXT " + ");"
+            "CREATE TABLE $TABLENAME_config ($config_Id INTEGER PRIMARY KEY AUTOINCREMENT,$config_Key TEXT ,$config_Value TEXT );"
         try {
             db.execSQL(query)
+            db.execSQL(createTableQuery)
         } catch (e: Exception) {
-            Logger.e("db", "onCreate", e)
+            Logger.d("db", "onCreate - $e")
         }
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         try {
-            db.execSQL("DROP TABLE IF EXISTS " + TABLENAME_config)
+            db.execSQL("DROP TABLE IF EXISTS $TABLENAME_config")
         } catch (e: Exception) {
-            Logger.e("db", "onUpgrade", e)
+            Logger.d("db", "onUpgrade - $e")
         }
         onCreate(db)
     }
@@ -43,11 +45,11 @@ class SQLDataHelper(context: Context?) :
         try {
             db.insert(TABLENAME_config, null, contentValues)
         } catch (e: Exception) {
-            Logger.e("db", "insert_config", e)
+            Logger.d("db", "insert_config - $e")
         }
     }
 
-    fun insert_configByKey(table_model_obj: Config) {
+    fun insertConfigByKey(table_model_obj: Config) {
         var c: Cursor? = null
         try {
             val q1 =
@@ -63,7 +65,7 @@ class SQLDataHelper(context: Context?) :
                             "$config_Key= ? ",
                             arrayOf(table_model_obj.key))
                     } catch (e: Exception) {
-                        Logger.e("db", "insert_configByKey", e)
+                        Logger.d("db", "insert_configByKey - $e")
                     }
                 }
             } else {
@@ -71,19 +73,19 @@ class SQLDataHelper(context: Context?) :
             }
             c.close()
         } catch (e: Exception) {
-            Logger.e("db", "insert_configByKey", e)
+            Logger.d("db", "insert_configByKey - $e")
         } finally {
             c?.close()
         }
     }
 
 
-    fun getconfigByKey(key: String): Config {
+    fun getConfigByKey(key: String): Config {
         val log = Config()
         var c: Cursor? = null
         try {
             val query =
-                "select * from " + TABLENAME_config + " where " + config_Key + " ='" + key + "'"
+                "select * from $TABLENAME_config where $config_Key ='$key'"
             c = db.rawQuery(query, null)
             if (c != null && c.moveToNext()) {
                 do {
@@ -94,7 +96,7 @@ class SQLDataHelper(context: Context?) :
             }
             c.close()
         } catch (e: Exception) {
-            Logger.e("db", "getconfigByKey", e)
+            Logger.d("db", "getconfigByKey - $e")
         } finally {
             c?.close()
         }
@@ -103,9 +105,9 @@ class SQLDataHelper(context: Context?) :
 
     fun deleteAllConfigs() {
         try {
-            db.execSQL("DELETE FROM " + TABLENAME_config)
+            db.execSQL("DELETE FROM $TABLENAME_config")
         } catch (e: Exception) {
-            Logger.e("db", "deleteAllConfigs", e)
+            Logger.d("db", "deleteAllConfigs - $e")
         }
     }
 
@@ -119,3 +121,4 @@ class SQLDataHelper(context: Context?) :
         private const val TAG = "database_log"
     }
 }
+

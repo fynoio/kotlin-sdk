@@ -5,34 +5,59 @@ import io.fyno.core.FynoCore
 import io.fyno.core.utils.LogLevel
 import io.fyno.pushlibrary.FynoPush
 import io.fyno.pushlibrary.models.PushRegion
+//import io.sentry.Sentry
+//import io.sentry.protocol.User
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
-class FynoSdk {
-    companion object{
-        fun initialize(context: Context, workspaceId: String, token: String, userId: String?=null) {
-            if(userId.isNullOrBlank())
-                FynoCore.initialize(context, workspaceId, token)
-            else
-                FynoCore.initialize(context, workspaceId, token, userId)
-        }
 
-        fun registerPush(xiaomiApplicationId: String? = "", xiaomiApplicationKey: String? = "", pushRegion: PushRegion? = PushRegion.INDIA, fcmIntegration: String = "", miIntegration: String = ""){
-            FynoPush().registerPush(xiaomiApplicationId, xiaomiApplicationKey, pushRegion,fcmIntegration)
+public object FynoSdk {
+    fun initialize(context: Context, workspaceId: String, token: String, userId: String? = null, version: String = "live") {
+        runBlocking(Dispatchers.IO) {
+            FynoCore.initialize(context, workspaceId, token, version)
+            userId?.let {
+                FynoCore.identify(uniqueId = it, update = true)
+//                    Sentry.configureScope {
+//                        val user = User()
+//                        user.id = userId
+//                        it.user = user
+//                    }
+            }
         }
+    }
 
-        fun identify(uniqueId: String) {
-            FynoCore.identify(uniqueId)
+    fun registerPush(xiaomiApplicationId: String? = "", xiaomiApplicationKey: String? = "", pushRegion: PushRegion? = PushRegion.INDIA, integrationId: String = "") {
+        FynoPush().registerPush(xiaomiApplicationId, xiaomiApplicationKey, pushRegion, integrationId)
+    }
+
+    fun identify(uniqueId: String, userName: String? = null) {
+        runBlocking(Dispatchers.IO) {
+                FynoCore.identify(uniqueId, userName, true)
         }
-        fun resetUser() {
-            FynoCore.resetUser()
+    }
+
+    fun resetUser() {
+        runBlocking(Dispatchers.IO) {
+                FynoCore.resetUser()
         }
-        fun resetConfig() {
-            FynoCore.resetConfig()
-        }
-        fun saveConfig(wsId: String, apiKey: String,fcmIntegration: String, miIntegration: String) {
-            FynoCore.saveConfig(wsId, apiKey, fcmIntegration, miIntegration)
-        }
-        fun setLogLevel(level: LogLevel) {
-            FynoCore.setLogLevel(level)
+    }
+
+    fun resetConfig() {
+        FynoCore.resetConfig()
+    }
+
+    fun saveConfig(wsId: String, apiKey: String, fcmIntegration: String, miIntegration: String) {
+        FynoCore.saveConfig(wsId, apiKey, fcmIntegration, miIntegration)
+    }
+
+    fun setLogLevel(level: LogLevel) {
+        FynoCore.setLogLevel(level)
+    }
+
+    fun mergeProfile(oldDistinctId: String, newDistinctId: String) {
+        runBlocking(Dispatchers.IO) {
+                FynoCore.mergeProfile(oldDistinctId, newDistinctId)
         }
     }
 }
