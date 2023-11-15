@@ -8,7 +8,7 @@ android {
     namespace "io.fyno.pushlibrary"
     compileSdk 33
     defaultConfig {
-        minSdk 27
+        minSdk 21
         targetSdk 33
         versionCode 1
         versionName "1.0.0"
@@ -35,10 +35,12 @@ android {
 }
 
 dependencies {
-    implementation 'io.fyno.kotlin-sdk:callback:1.0.0'
-    implementation 'io.fyno.kotlin-sdk:core:1.0.0'
+    implementation 'io.fyno.kotlin-sdk:core:1.0.11'
+    implementation 'io.fyno.kotlin-sdk:callback:1.0.3'
+//    implementation project(path: ':fyno-kotlin-callback')
+//    implementation project(path: ':fyno-kotlin-core')
     compileOnly fileTree(include: ["*.jar", "*.aar"], dir: "libs")
-    implementation 'com.google.firebase:firebase-messaging-ktx:23.1.2'
+    implementation 'com.google.firebase:firebase-messaging-ktx:23.3.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
@@ -48,7 +50,7 @@ dependencies {
     implementation ('io.socket:socket.io-client:2.1.0') {
         exclude group: 'org.json', module: 'json'
     }
-    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.8.20'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.8.22'
 }
 
 //afterEvaluate {
@@ -56,9 +58,9 @@ dependencies {
 //        publications {
 //            release(MavenPublication) {
 //                from components.release
-//                groupId = 'io.fyno'
+//                groupId = 'io.fyno.fyno_sdk'
 //                artifactId = 'pushlibrary'
-//                version = '1.0.0'
+//                version = '0.0.4'
 //            }
 //        }
 //    }
