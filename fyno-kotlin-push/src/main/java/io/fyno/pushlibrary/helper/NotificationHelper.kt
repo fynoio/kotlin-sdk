@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.media.AudioAttributes
@@ -28,40 +29,66 @@ import io.fyno.pushlibrary.notification.*
 import io.fyno.pushlibrary.notificationIntents.NotificationActionClickActivity
 import io.fyno.pushlibrary.notificationIntents.NotificationClickActivity
 import io.fyno.pushlibrary.notificationIntents.NotificationDismissedReceiver
-import io.fyno.kotlin_sdk.utils.FynoConstants
-import io.fyno.kotlin_sdk.utils.FynoContextCreator
-import io.fyno.kotlin_sdk.utils.Logger
+import io.fyno.core.utils.FynoConstants
+import io.fyno.core.utils.Logger
+import io.fyno.core.utils.NetworkDetails
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.*
 
 
 object NotificationHelper {
-    private fun createOnDismissedIntent(
-        context: Context,
-        notificationId: Int,
-        callbackUrl: String
-    ): PendingIntent? {
-        val intent = Intent(context, NotificationDismissedReceiver::class.java)
-        intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.notificationId", notificationId)
-        intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.callback", callbackUrl)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        return PendingIntent.getBroadcast(
-            context,
-            notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+//    private fun createOnDismissedIntent(
+//        context: Context,
+//        notificationId: Int,
+//        callbackUrl: String
+//    ): PendingIntent? {
+//        val intent = Intent(context, NotificationDismissedReceiver::class.java)
+//        intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.notificationId", notificationId)
+//        intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.callback", callbackUrl)
+//        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+//        return PendingIntent.getBroadcast(
+//            context,
+//            notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+//        )
+//    }
+private fun createOnDismissedIntent(
+    context: Context,
+    notificationId: Int,
+    callbackUrl: String?
+): PendingIntent? {
+    val intent = Intent(context, NotificationDismissedReceiver::class.java).apply {
+        putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.notificationId", notificationId)
+        callbackUrl?.let { putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.callback", it) }
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
     }
+    return intent.let {
+        PendingIntent.getBroadcast(
+        context,
+        notificationId,
+            it,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+    }
+}
     private fun createOnClickIntent(
         context: Context,
         notificationId: Int,
         callbackUrl: String,
-        action: String
+        action: String? = null,
+        extras: String?
     ): PendingIntent? {
         val intent = Intent(context, NotificationClickActivity::class.java)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.notificationId", notificationId)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.callback", callbackUrl)
-        intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.action", action)
+        intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        if(action.isNullOrEmpty()){
+            intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.action", context.packageManager.getLaunchIntentForPackage(context.packageName)?.component?.className.toString())
+
+        } else {
+            intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.action", action)
+        }
         return PendingIntent.getActivity(
             context.applicationContext,
             notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -73,13 +100,15 @@ object NotificationHelper {
         notificationId: Int,
         callbackUrl: String?,
         action: String?,
-        label: String?
+        label: String?,
+        extras: String?
     ): PendingIntent? {
         val intent = Intent(context, NotificationActionClickActivity::class.java)
         intent.extras?.getStringArrayList("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.action")
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.notificationId", notificationId)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.callback", callbackUrl)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.label", label)
+        intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString())
         intent.action = action
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         return PendingIntent.getActivity(
@@ -124,7 +153,8 @@ object NotificationHelper {
             showWhenTimeStamp = notificationPayloadJO.safeBoolean("showWhenTimeStamp"),
             whenTimeStamp = notificationPayloadJO.safeLong("whenTimeStamp"),
             actions = getActions(notificationPayloadJO),
-            template = notificationPayloadJO.safeString("template")
+            template = notificationPayloadJO.safeString("template"),
+            additional_data = notificationPayloadJO.safeString("additional_data")
         )
     }
     private fun getActions(notificationPayloadJO: JSONObject): List<Actions>? {
@@ -155,7 +185,7 @@ object NotificationHelper {
             if(notification.isNullOrBlank()) return
             showNotification(context.applicationContext, notification.createNotification())
         } catch (e: Exception) {
-            Logger.e(FcmHandlerService.TAG, "Push exception", e)
+            Logger.d(FcmHandlerService.TAG, "Push exception", e)
         }
     }
 
@@ -175,169 +205,170 @@ object NotificationHelper {
         }
     }
 
+    @SuppressLint("DiscouragedApi")
     private fun showNotification(context: Context, notification: RawMessage, pushVendor: String? = null) {
-        var id = 0
-        id = if (notification.id?.isNotBlank() == true)
-            notification.id.hashCode()
-        else
-            Random(System.currentTimeMillis()).nextInt(1000)
         try {
             val notificationModel = notification.getNotificationModel()
             val notificationManagerCompat = NotificationManagerCompat.from(context)
-            if(!notificationManagerCompat.areNotificationsEnabled()){
-                Logger.e(TAG,"Notifications permission denied")
+
+            if (!notificationManagerCompat.areNotificationsEnabled()) {
+                Logger.i(TAG, "Notifications permission denied")
+                notification.callback?.let { FynoCallback().updateStatus(it, MessageStatus.OPT_OUT) }
                 return
             }
+
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val notificationChannel = notificationModel.notificationChannel
-                notificationManager.getNotificationChannel(notificationChannel.id)?.run {
-                    name = notificationChannel.name
-                    description = notificationChannel.description
-                    notificationChannel.cSound.createRawSoundUri(context)?.let { soundUri ->
-                        this.setSound(soundUri,
-                            AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                                .build())
-                    }
-                    notificationManager.createNotificationChannel(this)
-                }
-                val importance = when (notificationChannel.channelImportance) {
-                    NotificationChannelImportance.DEFAULT -> NotificationManager.IMPORTANCE_DEFAULT
-                    NotificationChannelImportance.MIN -> NotificationManager.IMPORTANCE_MIN
-                    NotificationChannelImportance.MAX -> NotificationManager.IMPORTANCE_MAX
-                    NotificationChannelImportance.LOW -> NotificationManager.IMPORTANCE_LOW
-                    NotificationChannelImportance.HIGH -> NotificationManager.IMPORTANCE_HIGH
-                }
-                val channel = android.app.NotificationChannel(notificationChannel.id,
-                    notificationChannel.name,
-                    importance).apply {
-                    description = notificationChannel.description
-                    setShowBadge(notificationChannel.showBadge)
-                    notificationChannel.cSound.createRawSoundUri(context)?.let { soundUri ->
-                        setSound(soundUri,
-                            AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                                .build())
-                    }
-                    lockscreenVisibility = when (notificationChannel.channelLockScreenVisibility) {
-                        NotificationChannelVisibility.PRIVATE -> Notification.VISIBILITY_PRIVATE
-                        NotificationChannelVisibility.PUBLIC -> Notification.VISIBILITY_PUBLIC
-                        NotificationChannelVisibility.SECRET -> Notification.VISIBILITY_SECRET
-                    }
-                }
-                notificationManager.createNotificationChannel(channel)
-            }
-                val builder = Builder(context, notificationModel.notificationChannel.id)
-                val basicNotification = notificationModel.BasicNotification
-                if(basicNotification.smallIconDrawable.isNullOrBlank()){
-                    val smallIcon = context.resources.getIdentifier("cloudy", "drawable", context.packageName)
-                    builder.setSmallIcon(smallIcon)
-                } else {
-                    val smallIcon = context.resources.getIdentifier(basicNotification.smallIconDrawable, "drawable", context.packageName)
-                    builder.setSmallIcon(smallIcon)
-                }
+                notificationModel.notificationChannel.let { notificationChannel ->
+                    notificationManager.getNotificationChannel(notificationChannel.id)?.apply {
+                        name = notificationChannel.name
+                        description = notificationChannel.description
 
-
-                builder.setChannelId(notificationModel.notificationChannel.id)
-                basicNotification.priority.let { priority ->
-                    builder.priority = when(priority){
-                        NotificationPriority.DEFAULT -> NotificationCompat.PRIORITY_DEFAULT
-                        NotificationPriority.MIN -> NotificationCompat.PRIORITY_MIN
-                        NotificationPriority.MAX -> NotificationCompat.PRIORITY_MAX
-                        NotificationPriority.HIGH -> NotificationCompat.PRIORITY_HIGH
-                        NotificationPriority.LOW -> NotificationCompat.PRIORITY_LOW
-                    }
-                }
-                basicNotification.contentTitle.let {
-                    builder.setContentTitle(it)
-                }
-                basicNotification.contentText.let {
-                    builder.setContentText(it)
-                }
-                basicNotification.subTitle?.let {
-                    builder.setSubText(it)
-                }
-               notificationModel.bigPicture?.let {
-                   basicNotification.largeIconUrl?.let {
-                       if(it.isNotBlank()){
-                           builder.setLargeIcon(
-                               Glide.with(FynoContextCreator.context).asBitmap().apply(RequestOptions().encodeFormat(
-                                   Bitmap.CompressFormat.JPEG).encodeQuality(50)).load(it).submit().get()
-                           )
-                       }
-                   }
-                }
-                basicNotification.category?.let {
-                    builder.setCategory(it)
-                }
-                basicNotification.group?.let {
-                    builder.setGroup(it)
-                }
-                basicNotification.color?.let {
-                    if(it.isNotBlank()){
-                        builder.color = Color.parseColor(it)
-                    }
-                }
-                basicNotification.sound.let { sound ->
-                    sound.createRawSoundUri(context)?.let {uri->
-                        builder.setSound(uri)
-                    }
-                }
-                basicNotification.timeoutAfter?.let {
-                    builder.setTimeoutAfter(it)
-                }
-                basicNotification.autoCancel?.let {
-                    builder.setAutoCancel(it)
-                }
-                basicNotification.onGoing?.let {
-                    builder.setOngoing(it)
-                }
-                try {
-                    builder.setContentIntent(
-                        notification.callback?.let {
-                            notificationModel.getNotificationBodyAction().link?.let { it1 ->
-                                createOnClickIntent(
-                                    context, id,
-                                    it, it1
-                                )
-                            }
+                        notificationChannel.cSound.createRawSoundUri(context)?.let { soundUri ->
+                            this.setSound(soundUri, AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build())
                         }
-                    ).setDeleteIntent(notification.callback?.let {
-                        createOnDismissedIntent(
-                            context,
-                            id,
-                            it
-                        )
-                    })
-                } catch (e: Exception) {
-                    Logger.e("notification", "setBasicVo", e)
-                }
-            notificationModel.template?.let { setStyle(it,builder, notificationModel) }
-            try {
-                notificationModel.actions?.forEachIndexed { _, actionObj ->
-                    var actionIcon = 0
-                    actionObj.iconDrawableName?.let {
-                        actionIcon = context.resources.getIdentifier(actionObj.iconDrawableName, "drawable", context.packageName)
+
+                        notificationManager.createNotificationChannel(this)
                     }
-                    val actionIntent = createActionClickIntent(context, id, notification.callback,actionObj.link,actionObj.title)
-                    builder.addAction(
-                        actionIcon,
-                        actionObj.title,
-                        actionIntent
-                    )
+
+                    val importance = when (notificationModel.notificationChannel.channelImportance) {
+                        NotificationChannelImportance.DEFAULT -> NotificationManager.IMPORTANCE_DEFAULT
+                        NotificationChannelImportance.MIN -> NotificationManager.IMPORTANCE_MIN
+                        NotificationChannelImportance.MAX -> NotificationManager.IMPORTANCE_MAX
+                        NotificationChannelImportance.LOW -> NotificationManager.IMPORTANCE_LOW
+                        NotificationChannelImportance.HIGH -> NotificationManager.IMPORTANCE_HIGH
+                    }
+
+                    val channel = android.app.NotificationChannel(
+                        notificationModel.notificationChannel.id,
+                        notificationModel.notificationChannel.name,
+                        importance
+                    ).apply {
+                        description = notificationModel.notificationChannel.description
+                        setShowBadge(notificationModel.notificationChannel.showBadge)
+
+                        notificationModel.notificationChannel.cSound.createRawSoundUri(context)?.let { soundUri ->
+                            setSound(soundUri, AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build())
+                        }
+
+                        lockscreenVisibility = when (notificationModel.notificationChannel.channelLockScreenVisibility) {
+                            NotificationChannelVisibility.PRIVATE -> Notification.VISIBILITY_PRIVATE
+                            NotificationChannelVisibility.PUBLIC -> Notification.VISIBILITY_PUBLIC
+                            NotificationChannelVisibility.SECRET -> Notification.VISIBILITY_SECRET
+                        }
+                    }
+
+                    notificationManager.createNotificationChannel(channel)
+                }
+            }
+
+            val id = notification.id?.takeIf { it.isNotBlank() }?.hashCode() ?: Random(System.currentTimeMillis()).nextInt(1000)
+
+            val builder = Builder(context, notificationModel.notificationChannel.id)
+
+            val basicNotification = notificationModel.BasicNotification
+
+            val defaultSmallIcon = when {
+                basicNotification.smallIconDrawable.isNullOrBlank() -> {
+                    context.packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA)
+                    val iconName = context.packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA).metaData?.getString("com.google.firebase.messaging.default_notification_icon") ?: "ic_notification"
+                    context.applicationInfo.icon
+                }
+                else -> context.resources.getIdentifier(basicNotification.smallIconDrawable, "drawable", context.packageName)
+            }
+
+            builder.setSmallIcon(defaultSmallIcon)
+            builder.setChannelId(notificationModel.notificationChannel.id)
+
+            basicNotification.priority.let { priority ->
+                builder.priority = when (priority) {
+                    NotificationPriority.DEFAULT -> NotificationCompat.PRIORITY_DEFAULT
+                    NotificationPriority.MIN -> NotificationCompat.PRIORITY_MIN
+                    NotificationPriority.MAX -> NotificationCompat.PRIORITY_MAX
+                    NotificationPriority.HIGH -> NotificationCompat.PRIORITY_HIGH
+                    NotificationPriority.LOW -> NotificationCompat.PRIORITY_LOW
+                }
+            }
+
+            basicNotification.contentTitle.let { builder.setContentTitle(it) }
+            basicNotification.contentText.let { builder.setContentText(it) }
+            basicNotification.subTitle?.let { builder.setSubText(it) }
+
+            notificationModel.bigPicture?.let { bigPicture ->
+                basicNotification.largeIconUrl?.takeIf { it.isNotBlank() }?.let { url ->
+                        try {
+                            context.run {
+                                val isNetworkOnline = NetworkDetails.isOnline(context)
+                                if (!isNetworkOnline) {
+                                    val icon: Bitmap = Glide.with(context)
+                                        .asBitmap()
+                                        .apply(
+                                            RequestOptions().encodeFormat(Bitmap.CompressFormat.JPEG)
+                                                .encodeQuality(50)
+                                        )
+                                        .load(url)
+                                        .submit()
+                                        .get()
+                                    builder.setLargeIcon(icon)
+                                }
+                            }
+                        } catch (error: Exception) {
+                            Logger.i(TAG, "showNotification: Image download failed")
+                        }
+
+                }
+            }
+
+            basicNotification.category?.let { builder.setCategory(it) }
+            basicNotification.group?.let { builder.setGroup(it) }
+            basicNotification.color?.takeIf { it.isNotBlank() }?.let { builder.color = Color.parseColor(it) }
+
+            basicNotification.sound?.createRawSoundUri(context)?.let { uri ->
+                builder.setSound(uri)
+            }
+
+            basicNotification.timeoutAfter?.let { builder.setTimeoutAfter(it) }
+            builder.setAutoCancel(basicNotification.autoCancel ?: true)
+            basicNotification.onGoing?.let { builder.setOngoing(it) }
+
+            try {
+                notification.callback?.let {
+                    builder.setContentIntent(createOnClickIntent(context, id, it, notification.action, notificationModel.additional_data))
+                    builder.setDeleteIntent(createOnDismissedIntent(context, id, it))
                 }
             } catch (e: Exception) {
-                Logger.e("notification", "setNotificationAction", e)
+                Logger.d("notification", "setBasicVo", e)
             }
-            notificationManager.notify(id, builder.build())
+
+            notificationModel.template?.let { setStyle(context, it, builder, notificationModel) }
+
+            try {
+                notificationModel.actions?.forEachIndexed {_, actionObj ->
+                    if (!actionObj.title.isNullOrBlank()) {
+                        val actionIcon = actionObj.iconDrawableName?.let {
+                            context.resources.getIdentifier(it, "drawable", context.packageName)
+                        } ?: 0
+
+                        val actionIntent = createActionClickIntent(context, id, notification.callback, actionObj.link, actionObj.title, notification.toString())
+
+                        builder.addAction(actionIcon, actionObj.title, actionIntent)
+                    }
+                }
+            } catch (e: Exception) {
+                Logger.d("notification", "setNotificationAction", e)
+            }
             notification.callback?.let { FynoCallback().updateStatus(it, MessageStatus.RECEIVED) }
+            notificationManager.notify(id, builder.build())
         } catch (e: Exception) {
-            Logger.e(TAG, "showNotification", e)
+            Logger.d(TAG, "showNotification", e)
         }
     }
-    private fun setStyle(style: String, builder: Builder, notification: NotificationModel) {
+
+    private fun setStyle(context: Context, style: String, builder: Builder, notification: NotificationModel) {
         when(style){
             "style_bigtext" -> setBigTextStyle(notification, builder)
-            "style_bigpicture" -> setBigPictureStyle(notification, builder)
+            "style_bigpicture" -> setBigPictureStyle(context, notification, builder)
             "style_richtext" -> setRichTextStyle(notification, builder)
         }
     }
@@ -358,7 +389,7 @@ object NotificationHelper {
         builder.setStyle(textStyle)
     }
     @SuppressLint("SuspiciousIndentation")
-    private fun setBigPictureStyle(notification: NotificationModel, builder: Builder){
+    private fun setBigPictureStyle(context: Context, notification: NotificationModel, builder: Builder){
         val bigPicture = notification.bigPicture ?: return
         val pictureStyle = NotificationCompat.BigPictureStyle()
 
@@ -366,10 +397,20 @@ object NotificationHelper {
             pictureStyle.setBigContentTitle(it)
         }
         bigPicture.bigPictureUrl?.let {
-            pictureStyle.bigPicture(Glide.with(FynoContextCreator.context).asBitmap().apply(RequestOptions().encodeFormat(Bitmap.CompressFormat.JPEG).encodeQuality(50)).load(it).submit().get())
+            try {
+                val networkBigPicture: Bitmap = Glide.with(context).asBitmap().apply(RequestOptions().encodeFormat(Bitmap.CompressFormat.JPEG).encodeQuality(50)).load(it).submit().get()
+                pictureStyle.bigPicture(networkBigPicture)
+            } catch (error: Exception) {
+                Logger.d(TAG, "showNotification: Image download failed")
+            }
         }
         bigPicture.largeIconUrl?.let {
-            pictureStyle.bigLargeIcon(Glide.with(FynoContextCreator.context).asBitmap().apply(RequestOptions().encodeFormat(Bitmap.CompressFormat.JPEG).encodeQuality(50)).load(it).submit().get())
+            try {
+                val networkBigPicture: Bitmap = Glide.with(context).asBitmap().apply(RequestOptions().encodeFormat(Bitmap.CompressFormat.JPEG).encodeQuality(50)).load(it).submit().get()
+                pictureStyle.bigLargeIcon(networkBigPicture)
+            } catch (error: Exception) {
+                Logger.d(TAG, "showNotification: Image download failed")
+            }
         }
         bigPicture.summaryText?.let {
             pictureStyle.setSummaryText(it)
@@ -405,12 +446,12 @@ object NotificationHelper {
         return payload.createNotification()
     }
 
-    
+
     private fun String?.toNotificationObject(): JSONObject {
         return try {
             if (isNullOrBlank())
                 return JSONObject()
-            return JSONObject(this.replace("\\n","").replace("\\",""))
+            return JSONObject(this.replace("\\n",""))
         } catch (e: Exception) {
             JSONObject()
         }
@@ -453,6 +494,7 @@ object NotificationHelper {
         return this?.content?.toNotificationObject()?.has("fyno_push") ?: false
     }
 
+    @SuppressLint("DiscouragedApi")
     private fun String?.createRawSoundUri(context: Context): Uri? {
         var soundFile = this ?: return null
         if (soundFile.isBlank()) {

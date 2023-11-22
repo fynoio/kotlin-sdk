@@ -1,94 +1,28 @@
 package io.fyno.kotlin_sdk
 
-import android.app.NotificationManager
-import android.content.*
-import android.os.Build
-import android.util.Log
-import android.widget.Toast
-import androidx.annotation.RequiresApi
-import io.fyno.kotlin_sdk.models.MessageStatus
-import io.fyno.kotlin_sdk.models.PushRegion
-import com.google.firebase.FirebaseApp
-import com.google.firebase.messaging.FirebaseMessaging
-import com.xiaomi.channel.commonutils.android.Region
-import com.xiaomi.mipush.sdk.MiPushClient
-import org.json.JSONObject
-import java.util.*
+import android.content.Context
+import io.fyno.core.FynoCore
+import io.fyno.core.utils.LogLevel
+import io.fyno.pushlibrary.FynoPush
+import io.fyno.pushlibrary.models.PushRegion
+//import io.sentry.Sentry
+//import io.sentry.protocol.User
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
-class FynoSdk {
-    companion object {
-        val TAG = "FynoSDK"
-        @RequiresApi(Build.VERSION_CODES.N)
-        fun showPermissionDialog(){
-            val mNotificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            if(!mNotificationManager.areNotificationsEnabled())
-                appContext.startActivity(Intent(appContext, GetPermissions::class.java))
-        }
-        lateinit var appContext: Context
-        private var fynoPreferences: SharedPreferences? = null
-        private fun setString(key: String?, value: String?) {
-            val editor: SharedPreferences.Editor? = fynoPreferences?.edit()
-            editor?.putString(key, value)
-            editor?.apply()
-        }
-        fun enableInapp(user_id: String, wsid: String, signature: String, flag: Boolean, listener: InAppListener){
-            if(!flag)
-                return
-            else{
-                Intent(appContext, FynoInappService::class.java).also { intent ->
-                    appContext.startService(intent)
-                    FynoInappService().initSocket(user_id, wsid, signature, listener)
-                }
-            }
-        }
-        fun setMiRegion(region: PushRegion){
-            var miRegion = Region.Global
-            when (region) {
-                PushRegion.INDIA -> {
-                    miRegion = Region.India
-                }
-                PushRegion.EUROPE -> {
-                    miRegion = Region.Europe
-                }
-                PushRegion.RUSSIA -> {
-                    miRegion = Region.Russia
-                }
-                PushRegion.GLOBAL -> {
-                    miRegion = Region.Global
-                }
-                else -> {
-                    Log.e(TAG +"MiHelper", "setMiRegion: Region not found, Mi supports India,Europe,Russia and Global regions")
-                }
-            }
-            MiPushClient.setRegion(miRegion)
-        }
-        fun registerMiPush(APP_ID: String, APP_KEY:String){
-            MiPushClient.registerPush(appContext,APP_ID,APP_KEY)
-            setString("MiToken", MiPushClient.getRegId(appContext))
-            Log.d("MiToken", "Mi Push token registered: "+MiPushClient.getRegId(appContext))
-        }
-        fun initialize(context: Context, WSId: String) {
-            if (WSId.isEmpty()) {
-                throw IllegalArgumentException("Workspace Id is empty")
-            }
-            if(context == null) {
-                throw IllegalArgumentException("Must initialize with the app context")
-            }
-            appContext = context
-            fynoPreferences = context.getSharedPreferences(
-                context.packageName + "-" + "fynoio",
-                ContextWrapper.MODE_PRIVATE
-            )
-            setString("WS_ID", WSId)
-            registerFCM()
-        }
 
-        private fun registerFCM(){
-            FirebaseApp.initializeApp(appContext)
-            try {
-                logRegToken()
-            } catch (e:Exception) {
-                throw IllegalStateException(e.message)
+public object FynoSdk {
+    fun initialize(context: Context, workspaceId: String, token: String, userId: String? = null, version: String = "live") {
+        runBlocking(Dispatchers.IO) {
+            FynoCore.initialize(context, workspaceId, token, version)
+            userId?.let {
+                FynoCore.identify(uniqueId = it, update = true)
+//                    Sentry.configureScope {
+//                        val user = User()
+//                        user.id = userId
+//                        it.user = user
+//                    }
             }
         }
         private fun logRegToken() {
@@ -142,6 +76,40 @@ class FynoSdk {
             runBlocking (Dispatchers.IO) {
                 FynoCallback().updateStatus(callbackURL, status, action)
             }
+        }
+    }
+
+    fun registerPush(xiaomiApplicationId: String? = "", xiaomiApplicationKey: String? = "", pushRegion: PushRegion? = PushRegion.INDIA, integrationId: String = "") {
+        FynoPush().registerPush(xiaomiApplicationId, xiaomiApplicationKey, pushRegion, integrationId)
+    }
+
+    fun identify(uniqueId: String, userName: String? = null) {
+        runBlocking(Dispatchers.IO) {
+                FynoCore.identify(uniqueId, userName, true)
+        }
+    }
+
+    fun resetUser() {
+        runBlocking(Dispatchers.IO) {
+                FynoCore.resetUser()
+        }
+    }
+
+    fun resetConfig() {
+        FynoCore.resetConfig()
+    }
+
+    fun saveConfig(wsId: String, apiKey: String, fcmIntegration: String, miIntegration: String) {
+        FynoCore.saveConfig(wsId, apiKey, fcmIntegration, miIntegration)
+    }
+
+    fun setLogLevel(level: LogLevel) {
+        FynoCore.setLogLevel(level)
+    }
+
+    fun mergeProfile(oldDistinctId: String, newDistinctId: String) {
+        runBlocking(Dispatchers.IO) {
+                FynoCore.mergeProfile(oldDistinctId, newDistinctId)
         }
     }
 }
