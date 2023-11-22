@@ -14,6 +14,7 @@ internal class GetPermissions : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         askNotificationPermission()
+        finish()
     }
 
     private val requestPermissionLauncher = registerForActivityResult(

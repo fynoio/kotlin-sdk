@@ -4,62 +4,95 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import io.fyno.callback.FynoCallback
-import io.fyno.kotlin_sdk.FynoSdk
+import io.fyno.core.FynoCore
 import io.fyno.callback.models.MessageStatus
+import io.fyno.core.utils.Logger
+import io.fyno.pushlibrary.FynoPush
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 
 
+
 class NotificationActionClickActivity : AppCompatActivity() {
-    @RequiresApi(Build.VERSION_CODES.M)
+    val ACTION_NOTIFICATIONACTION_CLICK = "io.fyno.pushlibrary.NOTIFICATION_ACTION"
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.d("NotificationActionClick", "onCreate: ")
-        handleActionClick()
-        super.onCreate(savedInstanceState)
-    }
-    @RequiresApi(Build.VERSION_CODES.M)
-    private fun handleActionClick() {
-        val callback = intent.extras!!.getString("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.callback")
-        val notificationId = intent.extras!!.getInt("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.notificationId")
-        var action = intent.action
-        var label = intent.extras!!.getString("io.fyno.kotlin_id.notificationIntents.notificationActionClickClickedReceiver.label")
-        Log.d("NotificationActionClick", "onReceive: $callback")
-        if (callback != null) {
-            FynoCallback().updateStatus(callback, MessageStatus.CLICKED, JSONObject().put("label",label).put("action",action))
+        try {
+            Logger.d("${FynoCore.TAG}-NotificationActionClick", "onCreate: ")
+            val launchintent = handleActionClick()
+            intent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
+                ?.let { launchintent?.putExtra("io.fyno.pushlibrary.notification.payload", it) }
+            this.applicationContext.startActivity(intent)
+            val cintent = Intent()
+            cintent.action = ACTION_NOTIFICATIONACTION_CLICK
+            cintent.putExtra("io.fyno.pushlibrary.notification.action", "action_clicked")
+            cintent.putExtra("io.fyno.pushlibrary.notification.intent", intent.toString())
+            cintent.component = null
+            sendBroadcast(cintent)
+            super.onCreate(savedInstanceState)
+            finish()
+        }catch(e:Exception) {
+            Logger.e("${FynoCore.TAG}-NotificationActionClick", e.message.toString(),e)
         }
-        if(action!=null) {
-            var intent: Intent? = null
+    }
+
+    private fun handleActionClick(): Intent? {
+        var newintent: Intent? = null
+
+        val callback =
+            intent.extras!!.getString("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.callback")
+        val notificationId =
+            intent.extras!!.getInt("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.notificationId")
+        var action = intent.action
+        var label =
+            intent.extras!!.getString("io.fyno.kotlin_id.notificationIntents.notificationActionClickClickedReceiver.label")
+        Logger.d("${FynoCore.TAG}-NotificationActionClick", "onReceive: $callback")
+        if (callback != null) {
+            runBlocking(Dispatchers.IO) {
+                FynoCallback().updateStatus(
+                    callback,
+                    MessageStatus.CLICKED,
+                    JSONObject().put("label", label).put("action", action)
+                )
+            }
+        }
+        if (action != null) {
             if (action.startsWith("http://") or action.startsWith("https://")) {
-                intent = Intent(Intent.ACTION_VIEW, Uri.parse(action)).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                newintent = Intent(Intent.ACTION_VIEW, Uri.parse(action)).apply {
+                    flags =
+                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 }
-            } else if(action.startsWith("www.")){
-                intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://$action")).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            } else if (action.startsWith("www.")) {
+                newintent = Intent(Intent.ACTION_VIEW, Uri.parse("https://$action")).apply {
+                    flags =
+                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 }
             } else {
                 try {
-                    intent = Intent(FynoSdk.appContext, Class.forName(action)).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    newintent = Intent(this, Class.forName(action)).apply {
+                        flags =
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY
                     }
                 } catch (e: ClassNotFoundException) {
-                    Log.e("ClassNotFound", "onStart: ${e.message}")
-                    intent = FynoSdk.appContext.packageManager.getLaunchIntentForPackage(FynoSdk.appContext.packageName)
+                    Logger.w("${FynoCore.TAG}-ClassNotFound", "handleActionClick: ${e.message}")
+                    newintent = this.packageManager.getLaunchIntentForPackage(this.packageName)
                         ?.apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                            flags =
+                                Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY
                         }
                 }
-
             }
-            FynoSdk.appContext.applicationContext.startActivity(intent)
         }
-        Log.d("NotificationActionClick", "onStart: ")
-        val mNotificationManager = FynoSdk.appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+//        putExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
+//        FynoPush.PushObject.handleActionClick(intent.extras!!.getString("io.fyno.kotlin_sdk.notificationIntents.extras"))
+        val mNotificationManager =
+            this.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         mNotificationManager.cancel(notificationId)
+
+        return newintent
     }
 }

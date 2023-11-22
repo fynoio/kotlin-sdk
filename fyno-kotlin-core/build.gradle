@@ -2,16 +2,15 @@ plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
     id 'maven-publish'
+    id "io.sentry.android.gradle" version "3.14.0"
 }
 
 android {
     namespace "io.fyno.kotlin_sdk"
     compileSdk 33
     defaultConfig {
-        minSdk 27
+        minSdk 21
         targetSdk 33
-        versionCode 1
-        versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -40,18 +39,22 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.8.20'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.6.21'
+//    implementation("io.sentry:sentry-android:6.32.0")
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            release(MavenPublication) {
-                from components.release
-                groupId = 'io.fyno'
-                artifactId = 'core'
-                version = '1.0.0'
-            }
-        }
-    }
-}
+//afterEvaluate {
+//    publishing {
+//        publications {
+//            release(MavenPublication) {
+//                from components.release
+//                groupId = 'io.fyno'
+//                artifactId = 'core'
+//                version = '1.0.0'
+//            }
+//        }
+//    }
+//}
+
+
+apply from:'maven-push.gradle'

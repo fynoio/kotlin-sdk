@@ -1,0 +1,88 @@
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+class Global {
+    static def POM_NAME = 'Fyno SDK'
+    static def POM_ARTIFACT_ID = 'kotlin-sdk'
+    static def POM_PACKAGING = 'aar'
+    static def VERSION_NAME = '1.0.8-sentry'
+
+    static def GROUP_ID = 'io.fyno.kotlin-sdk'
+    static def POM_DESCRIPTION = 'Fyno SDK'
+    static def POM_URL = 'https://github.com/fynoio/kotlin-sdk'
+    static def POM_SCM_URL = 'https://github.com/fynoio/kotlin-sdk'
+    static def POM_SCM_CONNECTION = 'scm:git:https://github.com/fynoio/kotlin-sdk'
+    static def POM_SCM_DEV_CONNECTION = 'scm:git:https://github.com/fynoio/kotlin-sdk.git'
+    static def POM_LICENCE_NAME = 'MIT License'
+    static def POM_LICENCE_URL = 'https://raw.githubusercontent.com/fynoio/kotlin-sdk/main/LICENSE'
+    static def POM_LICENCE_DIST = 'repo'
+    static def POM_DEVELOPER_ID = 'fynoio'
+    static def POM_DEVELOPER_NAME = 'Sai Vinod K'
+    static def SNAPSHOT_REPOSITORY_URL = 'https://s01.oss.sonatype.org/content/repositories/snapshots'
+    static def RELEASE_REPOSITORY_URL = 'https://s01.oss.sonatype.org/content/repositories/releases'
+    static def STAGING_REPOSITORY_URL = 'https://s01.oss.sonatype.org/content/groups/staging'
+}
+
+def getRepositoryUsername() {
+    return hasProperty('mavenCentralUsername') ? mavenCentralUsername : ""
+}
+
+def getRepositoryPassword() {
+    return hasProperty('mavenCentralPassword') ? mavenCentralPassword : ""
+}
+
+afterEvaluate {
+    publishing {
+        repositories {
+            maven {
+                url = Global.RELEASE_REPOSITORY_URL
+                credentials {
+                    username = getRepositoryUsername()
+                    password = getRepositoryPassword()
+                }
+            }
+        }
+
+        publications {
+            release(MavenPublication) {
+                from components.release
+                groupId = Global.GROUP_ID
+                artifactId = Global.POM_ARTIFACT_ID
+                version = Global.VERSION_NAME
+
+                pom {
+                    name = Global.POM_NAME
+                    packaging = Global.POM_PACKAGING
+                    description = Global.POM_DESCRIPTION
+                    url = Global.POM_URL
+
+                    scm {
+                        url = Global.POM_SCM_URL
+                        connection = Global.POM_SCM_CONNECTION
+                        developerConnection = Global.POM_SCM_DEV_CONNECTION
+                    }
+
+                    licenses {
+                        license {
+                            name = Global.POM_LICENCE_NAME
+                            url = Global.POM_LICENCE_URL
+                            distribution = Global.POM_LICENCE_DIST
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id = Global.POM_DEVELOPER_ID
+                            name = Global.POM_DEVELOPER_NAME
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    signing {
+        required { true }
+        sign publishing.publications.release
+    }
+}

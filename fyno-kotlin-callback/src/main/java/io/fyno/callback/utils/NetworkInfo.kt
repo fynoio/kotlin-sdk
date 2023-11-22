@@ -1,12 +1,10 @@
 package io.fyno.callback.utils
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.telephony.TelephonyManager
-import android.util.Log
 
 enum class NetworkType(val networkName: String) {
     WIFI("wifi"),
@@ -21,12 +19,7 @@ enum class NetworkType(val networkName: String) {
 
 object NetworkDetails {
     fun getNetworkType(context: Context): NetworkType {
-        val context = context
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val currentNetwork = cm.activeNetwork
-        val capabilities = cm.getNetworkCapabilities(currentNetwork)
-        val linkProperties = cm.getLinkProperties(currentNetwork)
-        Log.i("FynoUtils", "getNetworkType: ${currentNetwork.toString()} ~~~~~~~ ${capabilities.toString()} ~~~~~~~~~~ ${linkProperties.toString()}")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             cm.run {
                 cm.getNetworkCapabilities(cm.activeNetwork)?.run {
@@ -42,7 +35,7 @@ object NetworkDetails {
                 }
             }
         } else {
-            cm?.run {
+            cm.run {
                 cm.activeNetworkInfo?.run {
                     if (type == ConnectivityManager.TYPE_WIFI) {
                         return NetworkType.WIFI
@@ -69,6 +62,7 @@ object NetworkDetails {
                             TelephonyManager.NETWORK_TYPE_LTE,
                             TelephonyManager.NETWORK_TYPE_IWLAN,
                             19 -> NetworkType.G4
+
                             20 -> NetworkType.G5
                             else -> NetworkType.UNKNOWN
                         }
@@ -84,7 +78,6 @@ object NetworkDetails {
     }
 
     fun isOnline(context: Context): Boolean {
-        val context = context
         val connectivityMgr = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
@@ -101,3 +94,4 @@ object NetworkDetails {
         return false
     }
 }
+

@@ -14,8 +14,9 @@ open class FynoInappService : Service() {
     var isNotified = false;
     lateinit var listener: InAppListener
     lateinit var mSocket: Socket
+    var page = 1
     override fun onBind(intent: Intent?): IBinder? {
-        TODO("Not yet implemented")
+        // TODO("Not yet implemented")
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -37,7 +38,8 @@ open class FynoInappService : Service() {
                 Log.d(TAG, "initSocket: Message Received ${notificationContent.toString()}")
                 handleFynoMessageReceived(notificationContent)
             }.on("connectionSuccess"){
-                mSocket.emit("get:messages",JSONObject("{\"filter\":\"all\",\"page\":1}"))
+                mSocket.emit("get:messages",JSONObject("{\"filter\":\"all\",\"page\":$page}"))
+                page = page + 1
             }.on("messages:state"){
                 Log.d(TAG, "Incoming Messages: ${it[0]}")
             }.on("statusUpdated"){
@@ -50,11 +52,48 @@ open class FynoInappService : Service() {
     }
 
     open fun notify(remoteMessage: JSONObject) {
-        Log.d("In-FynoSDK", "handleFynoMessageReceived: ${remoteMessage.toString()}")
-        NotificationHelper.renderInappMessage(this, remoteMessage.toString())
+        if(mSocket.isActive) {
+            Log.d("In-FynoSDK", "handleFynoMessageReceived: ${remoteMessage.toString()}")
+            NotificationHelper.renderInappMessage(this, remoteMessage.toString())
+        }
     }
 
     open fun handleFynoMessageReceived(remoteMessage: JSONObject){
-        listener.onMessageReceived(remoteMessage)
+        if(mSocket.isActive) {
+            listener.onMessageReceived(remoteMessage)
+        }
+    }
+
+    open fun loadMore(){
+        if(mSocket.isActive) {
+            mSocket.emit("get:messages", JSONObject("{\"filter\":\"all\",\"page\":$page}"))
+            page = page + 1
+        }
+    }
+
+    open fun markAll(){
+        if(mSocket.isActive) {
+            mSocket.emit("markAll:read")
+            page = page + 1
+        }
+    }
+
+    open fun deleteAll(){
+        if(mSocket.isActive) {
+            mSocket.emit("markAll:delete")
+            page = page + 1
+        }
+    }
+
+    open fun markMessage(msg) {
+        if(mSocket.isActive) {
+            mSocket.emit("message:read", msg)
+        }
+    }
+
+    open fun deleteMessage(msg) {
+        if(mSocket.isActive) {
+            mSocket.emit("message:deleted", msg)
+        }
     }
 }

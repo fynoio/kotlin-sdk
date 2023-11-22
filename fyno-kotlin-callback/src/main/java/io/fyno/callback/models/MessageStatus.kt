@@ -4,5 +4,6 @@ enum class MessageStatus {
     RECEIVED,
     OPENED,
     CLICKED,
-    DISMISSED
+    DISMISSED,
+    OPT_OUT
 }
