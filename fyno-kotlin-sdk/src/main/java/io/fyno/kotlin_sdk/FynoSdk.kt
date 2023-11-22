@@ -71,12 +71,6 @@ public object FynoSdk {
             }).start()
             //TODO("Add extra data for action click as in which click and what is the action")
         }
-
-        fun updateStatus(callbackURL:String,status:io.fyno.callback.models.MessageStatus,action:JSONObject){
-            runBlocking (Dispatchers.IO) {
-                FynoCallback().updateStatus(callbackURL, status, action)
-            }
-        }
     }
 
     fun registerPush(xiaomiApplicationId: String? = "", xiaomiApplicationKey: String? = "", pushRegion: PushRegion? = PushRegion.INDIA, integrationId: String = "") {
