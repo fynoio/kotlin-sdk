@@ -93,7 +93,7 @@ object RequestHandler {
     }
 
     private fun calculateDelay(retryCount: Int): Long {
-        return minOf(2.0.pow(retryCount.toDouble()).toLong(), MAX_BACKOFF_DELAY)
+        return minOf(4.0.pow(retryCount.toDouble()).toLong() * 1000, MAX_BACKOFF_DELAY)
     }
 
     @Throws(Exception::class)
