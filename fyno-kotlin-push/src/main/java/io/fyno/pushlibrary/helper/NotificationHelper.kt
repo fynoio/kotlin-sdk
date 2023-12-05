@@ -213,7 +213,7 @@ private fun createOnDismissedIntent(
 
             if (!notificationManagerCompat.areNotificationsEnabled()) {
                 Logger.i(TAG, "Notifications permission denied")
-                notification.callback?.let { FynoCallback().updateStatus(it, MessageStatus.OPT_OUT) }
+                notification.callback?.let { FynoCallback().updateStatus(context, it, MessageStatus.OPT_OUT) }
                 return
             }
 
@@ -358,7 +358,7 @@ private fun createOnDismissedIntent(
             } catch (e: Exception) {
                 Logger.d("notification", "setNotificationAction", e)
             }
-            notification.callback?.let { FynoCallback().updateStatus(it, MessageStatus.RECEIVED) }
+            notification.callback?.let { FynoCallback().updateStatus(context, it, MessageStatus.RECEIVED) }
             notificationManager.notify(id, builder.build())
         } catch (e: Exception) {
             Logger.d(TAG, "showNotification", e)
