@@ -11,12 +11,14 @@ import kotlinx.coroutines.runBlocking
 
 
 class ConnectionStateMonitor : NetworkCallback() {
+    private lateinit var cbContext: Context
     private val networkRequest: NetworkRequest = NetworkRequest.Builder()
         .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
         .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
         .build()
 
     fun enable(context: Context) {
+        cbContext = context
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         connectivityManager.registerNetworkCallback(networkRequest, this)
@@ -24,7 +26,8 @@ class ConnectionStateMonitor : NetworkCallback() {
 
     override fun onAvailable(network: Network) {
         runBlocking(Dispatchers.IO) {
-            RequestHandler.processOfflineRequests()
+            RequestHandler.processDbRequests()
+            RequestHandler.processCBRequests(cbContext)
         }
     }
 }
