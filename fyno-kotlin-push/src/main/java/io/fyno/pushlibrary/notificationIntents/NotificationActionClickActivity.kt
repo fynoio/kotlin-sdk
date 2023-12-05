@@ -54,6 +54,7 @@ class NotificationActionClickActivity : AppCompatActivity() {
         if (callback != null) {
             runBlocking(Dispatchers.IO) {
                 FynoCallback().updateStatus(
+                    applicationContext,
                     callback,
                     MessageStatus.CLICKED,
                     JSONObject().put("label", label).put("action", action)

@@ -23,12 +23,13 @@ class FynoCore {
         private lateinit var fynoPreferences: SharedPreferences
 
         fun initialize(context: Context, WSId: String, token: String, version: String = "live") {
-            ConnectionStateMonitor().enable(context)
             require(WSId.isNotEmpty()) { "Workspace Id is empty" }
 
             appContext = context
             FynoContextCreator.context = appContext
             NetworkDetails.getNetworkType()
+            ConnectionStateMonitor().enable(context)
+            
             fynoPreferences = context.getSharedPreferences("${context.packageName}-fynoio", ContextWrapper.MODE_PRIVATE)
 
             setString("WS_ID", WSId)

@@ -34,7 +34,7 @@ open class FcmHandlerService : FirebaseMessagingService() {
                 else -> {
                     val callback = message.data["callback"]
                     if (!callback.isNullOrEmpty()) {
-                        FynoCallback().updateStatus(callback, MessageStatus.RECEIVED)
+                        FynoCallback().updateStatus(this.applicationContext, callback, MessageStatus.RECEIVED)
                     }
                     super.onMessageReceived(message)
                 }
