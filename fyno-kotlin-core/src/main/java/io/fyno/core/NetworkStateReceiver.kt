@@ -14,8 +14,9 @@ class NetworkStateReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         if (isNetworkConnected(context)) {
             // The network is back online, trigger retry mechanism here
-            runBlocking(Dispatchers.IO){
-                RequestHandler.processOfflineRequests()
+            runBlocking(Dispatchers.IO) {
+                RequestHandler.processDbRequests()
+                RequestHandler.processCBRequests(context)
             }
         }
     }

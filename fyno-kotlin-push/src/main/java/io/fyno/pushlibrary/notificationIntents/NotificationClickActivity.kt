@@ -57,7 +57,7 @@ open class NotificationClickActivity : Activity() {
         Logger.d("${FynoCore.TAG}-NotificationClick", "onStart: Click Activity Started")
         if (callback != null) {
             runBlocking(Dispatchers.IO) {
-                    FynoCallback().updateStatus(callback, MessageStatus.CLICKED)
+                    FynoCallback().updateStatus(applicationContext, callback, MessageStatus.CLICKED)
             }
         }
         if(action!=null) {
