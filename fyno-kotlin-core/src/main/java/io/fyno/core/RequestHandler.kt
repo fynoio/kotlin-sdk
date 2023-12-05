@@ -56,12 +56,12 @@ object RequestHandler {
     }
 
 
-    // Function to save offline requests to SQLite database
+    // Function to save requests to SQLite database
     private fun saveRequestToDb(request: Request) {
         FynoContextCreator.sqlDataHelper.insertRequest(request, "requests")
     }
 
-    // Function to save offline CB requests to SQLite database
+    // Function to save callback requests to SQLite database
     private fun saveCBRequestToDb(request: Request, context: Context?) {
         sqlDataHelper = SQLDataHelper(context)
         sqlDataHelper.insertRequest(request, "callbacks")
@@ -157,7 +157,7 @@ object RequestHandler {
         }
     }
 
-    // Function to process offline requests from SQLite database
+    // Function to process requests from SQLite database
     @SuppressLint("Range")
     suspend fun processDbRequests() {
         // Retrieve requests from SQLite database
@@ -171,8 +171,8 @@ object RequestHandler {
             val method = cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_METHOD))
             val id = cursor.getInt(cursor.getColumnIndex(SQLDataHelper.COLUMN_ID))
 
-            val offlineRequest = Request(url, postData, method)
-            if (!handleRetries(offlineRequest, id)) {
+            val request = Request(url, postData, method)
+            if (!handleRetries(request, id)) {
                 break
             }
         }
@@ -180,7 +180,7 @@ object RequestHandler {
         cursor.close()
     }
 
-    // Function to process offline requests from SQLite database
+    // Function to process callback requests from SQLite database
     @SuppressLint("Range")
     fun processCBRequests(context: Context?) {
         // Retrieve requests from SQLite database
@@ -194,9 +194,9 @@ object RequestHandler {
             val method = cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_METHOD))
             val id = cursor.getInt(cursor.getColumnIndex(SQLDataHelper.COLUMN_ID))
 
-            val offlineRequest = Request(url, postData, method)
+            val request = Request(url, postData, method)
             CoroutineScope(Dispatchers.IO).launch {
-                handleRetries(offlineRequest, id, context)
+                handleRetries(request, id, context)
             }
         }
 
