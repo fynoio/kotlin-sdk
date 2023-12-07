@@ -5,7 +5,9 @@ import android.os.Build
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.RequestHandler
 import io.fyno.core.utils.Logger
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.time.*
@@ -48,8 +50,10 @@ class FynoCallback {
                 put("dlr_params", callbackObject[1])
             }
 
-            runBlocking(Dispatchers.IO) {
-                RequestHandler.requestPOST(callback_url, postDataParams, context = context)
+            runBlocking {
+                CoroutineScope(Dispatchers.IO).launch {
+                    RequestHandler.requestPOST(callback_url, postDataParams, context = context)
+                }
             }
         } catch (e: Exception) {
             Logger.w(TAG, "Unable to update message delivery status for url: $callback_url", e)
