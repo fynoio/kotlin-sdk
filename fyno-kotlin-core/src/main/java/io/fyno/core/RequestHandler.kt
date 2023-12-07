@@ -2,6 +2,8 @@ package io.fyno.core
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.database.Cursor
+import android.util.Log
 import io.fyno.core.FynoCore.Companion.TAG
 import io.fyno.core.utils.FynoContextCreator
 import io.fyno.core.utils.Logger
@@ -39,15 +41,15 @@ object RequestHandler {
             if (FynoContextCreator.isInitialized()) {
                 if(isCallBackRequest(r_url)){
                     saveCBRequestToDb(request, context)
-                    processCBRequests(context)
+                    processCBRequests(context,"requestPOST")
                 } else{
                     saveRequestToDb(request)
-                    processDbRequests()
+                    processDbRequests("requestPOST")
                 }
             } else {
                 if(isCallBackRequest(r_url)) {
                     saveCBRequestToDb(request, context)
-                    processCBRequests(context)
+                    processCBRequests(context,"requestPOST")
                 }
             }
         } catch (e: Exception) {
@@ -57,23 +59,29 @@ object RequestHandler {
 
 
     // Function to save requests to SQLite database
-    private fun saveRequestToDb(request: Request) {
-        FynoContextCreator.sqlDataHelper.insertRequest(request, "requests")
+    private fun saveRequestToDb(request: Request, id:Int? = 0) {
+        FynoContextCreator.sqlDataHelper.insertRequest(request, "requests", id)
     }
 
-    // Function to save callback requests to SQLite database
+    // Function to save CB requests to SQLite database
     private fun saveCBRequestToDb(request: Request, context: Context?) {
         sqlDataHelper = SQLDataHelper(context)
         sqlDataHelper.insertRequest(request, "callbacks")
+        sqlDataHelper.close()
     }
 
-    private fun deleteCBRequestFromDb(id: Int?,context: Context?){
+    private fun deleteCBRequestFromDb(id: Int?, context: Context?) {
         sqlDataHelper = SQLDataHelper(context)
         sqlDataHelper.deleteRequestByID(id, "callbacks")
+        sqlDataHelper.close()
     }
 
     // Function to handle the retry mechanism
-    private suspend fun handleRetries(request: Request, id: Int? = 0, context: Context? = null) :Boolean{
+    private suspend fun handleRetries(
+        request: Request,
+        id: Int? = 0,
+        context: Context? = null
+    ): Boolean {
         var retries = 0
         while (retries < MAX_RETRIES) {
             try {
@@ -89,6 +97,13 @@ object RequestHandler {
             }
         }
         Logger.w(TAG, "Max retries reached for request: ${request.url}")
+        if (isCallBackRequest(request.url)) {
+            sqlDataHelper= SQLDataHelper(context)
+            sqlDataHelper.updateStatusAndLastProcessedTime(id,"callbacks","not_processed")
+            sqlDataHelper.close()
+        } else {
+            FynoContextCreator.sqlDataHelper.updateStatusAndLastProcessedTime(id, "requests", "not_processed")
+        }
         return false
     }
 
@@ -97,7 +112,7 @@ object RequestHandler {
     }
 
     @Throws(Exception::class)
-    private fun doRequest(request: Request, id: Int? = 0,context: Context?=null) {
+    private fun doRequest(request: Request, id: Int? = 0, context: Context? = null) {
         val url = URL(request.url)
         URL(url.protocol, url.host, 3000, url.file)
         val conn: HttpURLConnection = url.openConnection() as HttpURLConnection
@@ -131,16 +146,16 @@ object RequestHandler {
                     deleteCBRequestFromDb(id,context)
                     return
                 }
-                FynoContextCreator.sqlDataHelper.deleteRequestByID(id,"requests")
+                FynoContextCreator.sqlDataHelper.deleteRequestByID(id, "requests")
             }
 
             in 400..499 -> {
                 Logger.i(TAG, "Request failed with response code: $responseCode")
-                if(isCallBackRequest(request.url)) {
-                    deleteCBRequestFromDb(id,context)
+                if (isCallBackRequest(request.url)) {
+                    deleteCBRequestFromDb(id, context)
                     return
                 }
-                FynoContextCreator.sqlDataHelper.deleteRequestByID(id,"requests")
+                FynoContextCreator.sqlDataHelper.deleteRequestByID(id, "requests")
             }
 
             else -> {
@@ -148,6 +163,7 @@ object RequestHandler {
                 throw Exception("Request failed with response code: $responseCode")
             }
         }
+        conn.disconnect()
     }
 
     private fun HttpURLConnection.setRequestProperties() {
@@ -159,47 +175,86 @@ object RequestHandler {
 
     // Function to process requests from SQLite database
     @SuppressLint("Range")
-    suspend fun processDbRequests() {
-        // Retrieve requests from SQLite database
-        val cursor = FynoContextCreator.sqlDataHelper.getRequests()
+    suspend fun processDbRequests(caller: String? = "") {
+        var cursor: Cursor? = null
+        try {
+            while (true) {
+                // Retrieve one request from SQLite database
+                cursor = FynoContextCreator.sqlDataHelper.getNextRequest()
 
-        while (cursor.moveToNext()) {
-            val url = cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_URL))
-            val postDataStr =
-                cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_POST_DATA))
-            val postData = if (postDataStr != null) JSONObject(postDataStr) else null
-            val method = cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_METHOD))
-            val id = cursor.getInt(cursor.getColumnIndex(SQLDataHelper.COLUMN_ID))
+                if (cursor.moveToNext()) {
+                    val url = cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_URL))
+                    val postDataStr =
+                        cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_POST_DATA))
+                    val postData = if (postDataStr != null) JSONObject(postDataStr) else null
+                    val method =
+                        cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_METHOD))
+                    val id = cursor.getInt(cursor.getColumnIndex(SQLDataHelper.COLUMN_ID))
+                    val lastProcessedTimeMillis =
+                        cursor.getLong(cursor.getColumnIndex(SQLDataHelper.COLUMN_LAST_PROCESSED_AT))
+                    val timeDifference = System.currentTimeMillis() - lastProcessedTimeMillis
 
-            val request = Request(url, postData, method)
-            if (!handleRetries(request, id)) {
-                break
+                    if (caller != "requestPOST" && timeDifference < 2000) {
+                        // Skip this record as the last update time is less than 2 seconds ago
+                        continue
+                    }
+
+                    FynoContextCreator.sqlDataHelper.updateStatusAndLastProcessedTime(id,"requests","processing")
+
+                    val request = Request(url, postData, method)
+                    if (!handleRetries(request, id)) {
+                        break
+                    }
+                } else {
+                    break
+                }
             }
+        } finally {
+            cursor?.close()
         }
-
-        cursor.close()
     }
 
-    // Function to process callback requests from SQLite database
+    // Function to process requests from SQLite database
     @SuppressLint("Range")
-    fun processCBRequests(context: Context?) {
+    suspend fun processCBRequests(context: Context?, caller:String? = "") {
         // Retrieve requests from SQLite database
-        sqlDataHelper=SQLDataHelper(context)
-        val cursor = sqlDataHelper.getCBRequests()
-        while (cursor.moveToNext()) {
-            val url = cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_URL))
-            val postDataStr =
-                cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_POST_DATA))
-            val postData = if (postDataStr != null) JSONObject(postDataStr) else null
-            val method = cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_METHOD))
-            val id = cursor.getInt(cursor.getColumnIndex(SQLDataHelper.COLUMN_ID))
+        var cursor: Cursor? = null
+        try {
+            sqlDataHelper = SQLDataHelper(context)
+            while (true) {
+                // Retrieve one request from SQLite database
+                cursor = sqlDataHelper.getNextCBRequest()
 
-            val request = Request(url, postData, method)
-            CoroutineScope(Dispatchers.IO).launch {
-                handleRetries(request, id, context)
+                if (cursor.moveToNext()) {
+                    val url = cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_URL))
+                    val postDataStr =
+                        cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_POST_DATA))
+                    val postData = if (postDataStr != null) JSONObject(postDataStr) else null
+                    val method =
+                        cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_METHOD))
+                    val id = cursor.getInt(cursor.getColumnIndex(SQLDataHelper.COLUMN_ID))
+                    val lastProcessedTimeMillis = cursor.getLong(cursor.getColumnIndex(SQLDataHelper.COLUMN_LAST_PROCESSED_AT))
+                    val timeDifference = System.currentTimeMillis() - lastProcessedTimeMillis
+
+                    if (caller != "requestPOST" && timeDifference < 2000) {
+                        // Skip this record as the last update time is less than 2 seconds ago
+                        continue
+                    }
+
+                    sqlDataHelper.updateStatusAndLastProcessedTime(id,"callbacks","processing")
+
+                    val request = Request(url, postData, method)
+                    runBlocking {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            handleRetries(request, id, context)
+                        }
+                    }
+                } else {
+                    break
+                }
             }
+        } finally {
+            cursor?.close()
         }
-
-        cursor.close()
     }
 }

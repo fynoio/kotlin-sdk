@@ -8,19 +8,15 @@ import io.fyno.callback.FynoCallback
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.FynoCore
 import io.fyno.core.utils.Logger
-import io.fyno.pushlibrary.FynoPush
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.json.JSONObject
 import java.lang.Exception
 interface NotificationClickHandler {
     fun onNotificationClicked(extras: Bundle)
 }
 open class NotificationClickActivity : Activity() {
-    private var notificationHandler: NotificationClickHandler? = null
-    fun setNotificationHandler(handler: NotificationClickHandler) {
-        notificationHandler = handler
-    }
     private val ACTION_NOTIFICATION_CLICK: String = "io.fyno.pushlibrary.NOTIFICATION_ACTION"
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -42,7 +38,6 @@ open class NotificationClickActivity : Activity() {
                 ?.let { launchintent.putExtra("io.fyno.pushlibrary.notification.payload", it) }
             sendBroadcast(cintent)
             super.onCreate(savedInstanceState)
-//            FynoPush.PushObject.handleNotificationClick(cintent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras"))
             finish()
         } catch (e:Exception) {
             Logger.e("${FynoCore.TAG}-NotificationClick",e.message.toString(),e)
@@ -56,8 +51,10 @@ open class NotificationClickActivity : Activity() {
         Logger.d("${FynoCore.TAG}-NotificationClicked", "onReceive: $callback")
         Logger.d("${FynoCore.TAG}-NotificationClick", "onStart: Click Activity Started")
         if (callback != null) {
-            runBlocking(Dispatchers.IO) {
+            runBlocking {
+                CoroutineScope(Dispatchers.IO).launch {
                     FynoCallback().updateStatus(applicationContext, callback, MessageStatus.CLICKED)
+                }
             }
         }
         if(action!=null) {

@@ -7,16 +7,20 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.NetworkInfo
 import android.os.Build
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class NetworkStateReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         if (isNetworkConnected(context)) {
             // The network is back online, trigger retry mechanism here
-            runBlocking(Dispatchers.IO) {
-                RequestHandler.processDbRequests()
-                RequestHandler.processCBRequests(context)
+            runBlocking {
+                CoroutineScope(Dispatchers.IO).launch {
+                    RequestHandler.processDbRequests()
+                    RequestHandler.processCBRequests(context)
+                }
             }
         }
     }
