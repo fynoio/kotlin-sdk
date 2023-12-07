@@ -13,6 +13,7 @@ import android.graphics.Color
 import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.Builder
 import androidx.core.app.NotificationManagerCompat
@@ -81,7 +82,7 @@ private fun createOnDismissedIntent(
         val intent = Intent(context, NotificationClickActivity::class.java)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.notificationId", notificationId)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.callback", callbackUrl)
-        intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras)
+intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         if(action.isNullOrEmpty()){
             intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.action", context.packageManager.getLaunchIntentForPackage(context.packageName)?.component?.className.toString())
@@ -108,7 +109,7 @@ private fun createOnDismissedIntent(
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.notificationId", notificationId)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.callback", callbackUrl)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.label", label)
-        intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString())
+intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString())
         intent.action = action
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         return PendingIntent.getActivity(
@@ -350,7 +351,7 @@ private fun createOnDismissedIntent(
                             context.resources.getIdentifier(it, "drawable", context.packageName)
                         } ?: 0
 
-                        val actionIntent = createActionClickIntent(context, id, notification.callback, actionObj.link, actionObj.title, notification.toString())
+                        val actionIntent = createActionClickIntent(context, id, notification.callback, actionObj.link, actionObj.title)
 
                         builder.addAction(actionIcon, actionObj.title, actionIntent)
                     }
@@ -358,7 +359,7 @@ private fun createOnDismissedIntent(
             } catch (e: Exception) {
                 Logger.d("notification", "setNotificationAction", e)
             }
-            notification.callback?.let { FynoCallback().updateStatus(context, it, MessageStatus.RECEIVED) }
+            notification.callback?.let { FynoCallback().updateStatus(context,it, MessageStatus.RECEIVED) }
             notificationManager.notify(id, builder.build())
         } catch (e: Exception) {
             Logger.d(TAG, "showNotification", e)
@@ -451,7 +452,7 @@ private fun createOnDismissedIntent(
         return try {
             if (isNullOrBlank())
                 return JSONObject()
-            return JSONObject(this.replace("\\n",""))
+            return JSONObject(this.replace("\\n","").replace("\\",""))
         } catch (e: Exception) {
             JSONObject()
         }
