@@ -1,6 +1,8 @@
 package io.fyno.kotlin_sdk
 
 import android.content.Context
+import io.fyno.callback.FynoCallback
+import io.fyno.callback.models.MessageStatus
 import io.fyno.core.FynoCore
 import io.fyno.core.utils.LogLevel
 import io.fyno.pushlibrary.FynoPush
@@ -34,10 +36,10 @@ public object FynoSdk {
                 }
             }
         }
+    }
 
-        fun updateStatus(callback_url: String, status: MessageStatus) {
-            FynoCallback.updateStatus(sdkContext,callback_url,status)
-        }
+    fun updateStatus(context: Context, callback_url: String, status: MessageStatus) {
+        FynoCallback().updateStatus(context,callback_url,status)
     }
 
     fun registerPush(
