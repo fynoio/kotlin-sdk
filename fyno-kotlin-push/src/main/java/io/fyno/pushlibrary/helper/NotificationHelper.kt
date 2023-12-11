@@ -351,7 +351,7 @@ intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString
                             context.resources.getIdentifier(it, "drawable", context.packageName)
                         } ?: 0
 
-                        val actionIntent = createActionClickIntent(context, id, notification.callback, actionObj.link, actionObj.title)
+                        val actionIntent = createActionClickIntent(context, id, notification.callback, actionObj.link, actionObj.title, notification.additional_data)
 
                         builder.addAction(actionIcon, actionObj.title, actionIntent)
                     }
