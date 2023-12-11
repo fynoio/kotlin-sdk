@@ -25,7 +25,7 @@ class FynoCore {
         lateinit var appContext: Context
         private lateinit var fynoPreferences: SharedPreferences
 
-                fun initialize(context: Context, WSId: String, token: String, version: String = "live") {
+        fun initialize(context: Context, WSId: String, token: String, version: String = "live") {
             require(WSId.isNotEmpty()) { "Workspace Id is empty" }
 
             val sqlDataHelper = SQLDataHelper(context)
@@ -36,7 +36,10 @@ class FynoCore {
             NetworkDetails.getNetworkType()
             ConnectionStateMonitor().enable(context)
 
-            fynoPreferences = context.getSharedPreferences("${context.packageName}-fynoio", ContextWrapper.MODE_PRIVATE)
+            fynoPreferences = context.getSharedPreferences(
+                "${context.packageName}-fynoio",
+                ContextWrapper.MODE_PRIVATE
+            )
 
             setString("WS_ID", WSId)
             setString("SECRET", token)
@@ -62,9 +65,10 @@ class FynoCore {
                             )
                             identify(uuid)
                             setFlag("isDirty", true)
-                                                }
+                        }
+                    }
                 } catch (e: Exception) {
-                    Logger.e(TAG, "In Exception initialize: ${e.message}",e)
+                    Logger.e(TAG, "In Exception initialize: ${e.message}", e)
                 }
             }
         }
@@ -115,7 +119,7 @@ class FynoCore {
             val pushObj = JSONArray()
 
             jsonObject.put("distinct_id", uniqueId)
-            if(!name.isNullOrEmpty()){
+            if (!name.isNullOrEmpty()) {
                 jsonObject.put("name", name)
             }
 
@@ -125,11 +129,19 @@ class FynoCore {
             val notificationStatus = if (areNotificationPermissionsEnabled()) 1 else 0
 
             if (!fcmToken.isNullOrBlank()) {
-                pushObj.put(JSONObject().put("token", "fcm_token:$fcmToken").put("integration_id", FynoUser.getFcmIntegration()).put("status", notificationStatus))
+                pushObj.put(
+                    JSONObject().put("token", "fcm_token:$fcmToken")
+                        .put("integration_id", FynoUser.getFcmIntegration())
+                        .put("status", notificationStatus)
+                )
             }
 
             if (!xiaomiToken.isNullOrBlank()) {
-                pushObj.put(JSONObject().put("token", "mi_token:$xiaomiToken").put("integration_id", FynoUser.getMiIntegration()).put("status", notificationStatus))
+                pushObj.put(
+                    JSONObject().put("token", "mi_token:$xiaomiToken")
+                        .put("integration_id", FynoUser.getMiIntegration())
+                        .put("status", notificationStatus)
+                )
             }
 
             if (pushObj.length() > 0) {
@@ -145,7 +157,7 @@ class FynoCore {
         }
 
         fun resetUser() {
-            if (!FynoContextCreator.isInitialized()){
+            if (!FynoContextCreator.isInitialized()) {
                 Logger.d(TAG, "Fyno context not initialized - reset rejected/failed")
                 return
             }
@@ -192,7 +204,7 @@ class FynoCore {
         }
 
         fun resetConfig() {
-            if (!FynoContextCreator.isInitialized()){
+            if (!FynoContextCreator.isInitialized()) {
                 Logger.d(TAG, "Fyno context not initialized - resetConfig rejected/failed")
                 return
             }
@@ -202,8 +214,13 @@ class FynoCore {
             FynoUser.setFcmIntegration("")
         }
 
-        fun saveConfig(wsId: String, apiKey: String, fcmIntegration: String, miIntegration: String) {
-            if (!FynoContextCreator.isInitialized()){
+        fun saveConfig(
+            wsId: String,
+            apiKey: String,
+            fcmIntegration: String,
+            miIntegration: String
+        ) {
+            if (!FynoContextCreator.isInitialized()) {
                 Logger.d(TAG, "Fyno context not initialized - saveConfig rejected/failed")
             }
             FynoUser.setWorkspace(wsId)
