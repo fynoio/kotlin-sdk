@@ -5,8 +5,8 @@ import io.fyno.core.FynoCore
 import io.fyno.core.utils.LogLevel
 import io.fyno.pushlibrary.FynoPush
 import io.fyno.pushlibrary.models.PushRegion
-import io.sentry.Sentry
-import io.sentry.protocol.User
+//import io.sentry.Sentry
+//import io.sentry.protocol.User
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -14,9 +14,13 @@ import kotlinx.coroutines.runBlocking
 
 
 public object FynoSdk {
-    lateinit var sdkContext:Context
-    fun initialize(context: Context, workspaceId: String, token: String, userId: String? = null, version: String = "live") {
-        sdkContext = context
+    fun initialize(
+        context: Context,
+        workspaceId: String,
+        token: String,
+        userId: String? = null,
+        version: String = "live"
+    ) {
         runBlocking {
             CoroutineScope(Dispatchers.IO).launch {
                 FynoCore.initialize(context, workspaceId, token, version)
@@ -36,8 +40,18 @@ public object FynoSdk {
         }
     }
 
-    fun registerPush(xiaomiApplicationId: String? = "", xiaomiApplicationKey: String? = "", pushRegion: PushRegion? = PushRegion.INDIA, integrationId: String = "") {
-        FynoPush().registerPush(xiaomiApplicationId, xiaomiApplicationKey, pushRegion, integrationId)
+    fun registerPush(
+        xiaomiApplicationId: String? = "",
+        xiaomiApplicationKey: String? = "",
+        pushRegion: PushRegion? = PushRegion.INDIA,
+        integrationId: String = ""
+    ) {
+        FynoPush().registerPush(
+            xiaomiApplicationId,
+            xiaomiApplicationKey,
+            pushRegion,
+            integrationId
+        )
     }
 
     fun identify(uniqueId: String, userName: String? = null) {

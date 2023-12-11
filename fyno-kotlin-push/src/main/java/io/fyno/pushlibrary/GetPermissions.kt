@@ -12,8 +12,8 @@ import androidx.core.content.ContextCompat
 
 internal class GetPermissions : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         askNotificationPermission()
+        super.onCreate(savedInstanceState)
         finish()
     }
 
