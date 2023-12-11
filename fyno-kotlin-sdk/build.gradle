@@ -44,7 +44,7 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     implementation 'org.jetbrains.kotlin:kotlin-reflect:1.8.22'
-    implementation("io.sentry:sentry-android:6.32.0")
+//    implementation("io.sentry:sentry-android:6.32.0")
 
 }
 
