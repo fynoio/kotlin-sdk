@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import io.fyno.core.FynoUser
 
 internal class GetPermissions : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,7 +22,7 @@ internal class GetPermissions : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-
+            FynoUser.getFcmToken()?.let { FynoUser.setFcmToken(it) }
             Toast.makeText(this, "Notifications permission granted", Toast.LENGTH_SHORT)
                 .show()
         } else {
