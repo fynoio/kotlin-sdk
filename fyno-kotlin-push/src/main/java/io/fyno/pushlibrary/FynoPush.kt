@@ -33,6 +33,7 @@ class FynoPush {
             if(!mNotificationManager.areNotificationsEnabled())
                 FynoCore.appContext.startActivity(intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or  Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK ))
             else
+                FynoUser.getFcmToken()?.let { FynoUser.setFcmToken(it) }
                 Logger.i(FcmHandlerService.TAG, "Notification Permissions are allowed")
         },5000);
     }
