@@ -4,6 +4,8 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import io.fyno.callback.FynoCallback
 import io.fyno.callback.models.MessageStatus
+import io.fyno.core.FynoCore
+import io.fyno.core.FynoUser
 import io.fyno.core.utils.FynoContextCreator
 import io.fyno.core.utils.Logger
 import io.fyno.pushlibrary.FynoPush
@@ -20,6 +22,8 @@ open class FcmHandlerService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         Logger.d(TAG, "onNewToken: $token")
+        if(FynoContextCreator.isInitialized())
+            FynoUser.setFcmToken(token)
         super.onNewToken(token)
     }
 

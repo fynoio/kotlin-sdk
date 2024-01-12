@@ -451,8 +451,9 @@ private fun createOnDismissedIntent(
         return try {
             if (isNullOrBlank())
                 return JSONObject()
-            return JSONObject(this.replace("\\n",""))
+            return JSONObject(this.replace("\\n","").replace("\\\\","\\"))
         } catch (e: Exception) {
+            Log.e(TAG, "toNotificationObject: Error while converting notification string to object", e );
             JSONObject()
         }
     }
