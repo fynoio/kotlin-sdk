@@ -20,9 +20,10 @@ import io.fyno.core.utils.Logger
 import io.fyno.pushlibrary.firebase.FcmHandlerService
 import io.fyno.pushlibrary.mipush.MiPushHelper
 import io.fyno.pushlibrary.models.PushRegion
+import java.util.concurrent.Delayed
 
 class FynoPush {
-    fun showPermissionDialog(){
+    fun showPermissionDialog(delay: Long = 0){
         Log.i(FynoCore.TAG, "showPermissionDialog: Im triggered")
         if(Build.VERSION.SDK_INT <= 24)
             return
@@ -32,9 +33,11 @@ class FynoPush {
             val mNotificationManager = FynoCore.appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             if(!mNotificationManager.areNotificationsEnabled())
                 FynoCore.appContext.startActivity(intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or  Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK ))
-            else
+            else {
                 Logger.i(FcmHandlerService.TAG, "Notification Permissions are allowed")
-        },5000);
+            }
+            GetPermissions().permissionResultManager(mNotificationManager.areNotificationsEnabled())
+        },delay);
     }
 
 
