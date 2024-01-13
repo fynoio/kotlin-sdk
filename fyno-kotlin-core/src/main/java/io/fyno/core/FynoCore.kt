@@ -22,19 +22,19 @@ class FynoCore {
         lateinit var appContext: Context
         private lateinit var fynoPreferences: SharedPreferences
 
-        fun initialize(context: Context, WSId: String, token: String, version: String = "live") {
+        fun initialize(context: Context, wsid: String, token: String, version: String = "live") {
             ConnectionStateMonitor().enable(context)
-            require(WSId.isNotEmpty()) { "Workspace Id is empty" }
+            require(wsid.isNotEmpty()) { "Workspace Id is empty" }
 
             appContext = context
             FynoContextCreator.context = appContext
             NetworkDetails.getNetworkType()
             fynoPreferences = context.getSharedPreferences("${context.packageName}-fynoio", ContextWrapper.MODE_PRIVATE)
 
-            setString("WS_ID", WSId)
+            setString("WS_ID", wsid)
             setString("SECRET", token)
             setString("VERSION", version)
-            FynoUser.setWorkspace(WSId)
+            FynoUser.setWorkspace(wsid)
             FynoUser.setApi(token)
 
             if (FynoUser.getIdentity().isEmpty()) {
@@ -67,7 +67,10 @@ class FynoCore {
                 return
             }
             val oldDistinctId = FynoUser.getIdentity()
-            if (oldDistinctId == uniqueId) return
+            if (oldDistinctId == uniqueId) {
+                updateName(name)
+                return
+            }
 //            Sentry.configureScope {
 //                val user = User()
 //                user.id = uniqueId
@@ -86,18 +89,26 @@ class FynoCore {
                         )
                         RequestHandler.requestPOST(mergeEndpoint, null, "PATCH")
                     }
-                    if(!name?.isEmpty()!!) {
-                        val upsertEndpoint = FynoUtils().getEndpoint(
-                            "upsert_profile",
-                            FynoUser.getWorkspace(),
-                            profile = uniqueId,
-                            version = getString("VERSION")
-                        )
-                        RequestHandler.requestPOST(upsertEndpoint, getParamsObj(uniqueId, name), "PUT")
-                    }
+                    FynoUser.identify(uniqueId)
+                    updateName(name)
                 }
+            } else
+                FynoUser.identify(uniqueId)
+        }
+
+        private fun updateName(name: String?) {
+            if(name.isNullOrEmpty()){
+                return
             }
-            FynoUser.identify(uniqueId)
+            val upsertEndpoint = FynoUtils().getEndpoint(
+                "upsert_profile",
+                FynoUser.getWorkspace(),
+                profile = FynoUser.getIdentity(),
+                version = getString("VERSION")
+            )
+            runBlocking(Dispatchers.IO) {
+                RequestHandler.requestPOST(upsertEndpoint, getParamsObj(FynoUser.getIdentity(), name), "PUT")
+            }
         }
 
         private fun getParamsObj(uniqueId: String, name: String? = null): JSONObject {

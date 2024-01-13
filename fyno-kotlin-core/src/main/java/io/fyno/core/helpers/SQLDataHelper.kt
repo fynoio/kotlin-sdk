@@ -6,14 +6,9 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import io.fyno.core.RequestHandler
 import io.fyno.core.utils.Logger
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
+
 
 class Config(
     var key: String? = null,

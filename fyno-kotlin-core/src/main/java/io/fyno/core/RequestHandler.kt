@@ -3,7 +3,6 @@ package io.fyno.core
 import android.annotation.SuppressLint
 import android.content.Context
 import android.database.Cursor
-import android.util.Log
 import io.fyno.core.FynoCore.Companion.TAG
 import io.fyno.core.utils.FynoContextCreator
 import io.fyno.core.utils.Logger
@@ -156,6 +155,7 @@ object RequestHandler {
                     return
                 }
                 FynoContextCreator.sqlDataHelper.deleteRequestByID(id, "requests")
+                throw Exception("Request failed with response code: $responseCode")
             }
 
             else -> {

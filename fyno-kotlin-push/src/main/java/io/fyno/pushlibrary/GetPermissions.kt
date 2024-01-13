@@ -22,10 +22,10 @@ internal class GetPermissions : AppCompatActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        permissionResultManaget(isGranted)
+        permissionResultManager(isGranted)
     }
 
-    public fun permissionResultManaget(result: Boolean) {
+    public fun permissionResultManager(result: Boolean) {
         if (result) {
             FynoUser.getFcmToken()?.let {
                 FynoUser.setFcmToken(it)
