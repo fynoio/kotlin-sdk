@@ -13,6 +13,7 @@ import android.graphics.Color
 import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.Builder
 import androidx.core.app.NotificationManagerCompat
@@ -38,7 +39,7 @@ import java.util.*
 
 
 object NotificationHelper {
-//    private fun createOnDismissedIntent(
+    //    private fun createOnDismissedIntent(
 //        context: Context,
 //        notificationId: Int,
 //        callbackUrl: String
@@ -52,25 +53,25 @@ object NotificationHelper {
 //            notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 //        )
 //    }
-private fun createOnDismissedIntent(
-    context: Context,
-    notificationId: Int,
-    callbackUrl: String?
-): PendingIntent? {
-    val intent = Intent(context, NotificationDismissedReceiver::class.java).apply {
-        putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.notificationId", notificationId)
-        callbackUrl?.let { putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.callback", it) }
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+    private fun createOnDismissedIntent(
+        context: Context,
+        notificationId: Int,
+        callbackUrl: String?
+    ): PendingIntent? {
+        val intent = Intent(context, NotificationDismissedReceiver::class.java).apply {
+            putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.notificationId", notificationId)
+            callbackUrl?.let { putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.callback", it) }
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        return intent.let {
+            PendingIntent.getBroadcast(
+                context,
+                notificationId,
+                it,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
     }
-    return intent.let {
-        PendingIntent.getBroadcast(
-        context,
-        notificationId,
-            it,
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-    )
-    }
-}
     private fun createOnClickIntent(
         context: Context,
         notificationId: Int,
@@ -213,7 +214,7 @@ private fun createOnDismissedIntent(
 
             if (!notificationManagerCompat.areNotificationsEnabled()) {
                 Logger.i(TAG, "Notifications permission denied")
-                notification.callback?.let { FynoCallback().updateStatus(it, MessageStatus.OPT_OUT) }
+                notification.callback?.let { FynoCallback().updateStatus(context, it, MessageStatus.OPT_OUT) }
                 return
             }
 
@@ -268,17 +269,36 @@ private fun createOnDismissedIntent(
             val builder = Builder(context, notificationModel.notificationChannel.id)
 
             val basicNotification = notificationModel.BasicNotification
+            var defaultSmallIcon = 0
+            try {
+                defaultSmallIcon = when {
+                    basicNotification.smallIconDrawable.isNullOrBlank() -> {
+                        context.packageManager.getApplicationInfo(
+                            context.packageName,
+                            PackageManager.GET_META_DATA
+                        )
+                        val iconName = context.packageManager.getApplicationInfo(
+                            context.packageName,
+                            PackageManager.GET_META_DATA
+                        ).metaData?.getString("com.google.firebase.messaging.default_notification_icon")
+                            ?: "ic_notification"
+                        context.applicationInfo.icon
+                    }
 
-            val defaultSmallIcon = when {
-                basicNotification.smallIconDrawable.isNullOrBlank() -> {
-                    context.packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA)
-                    val iconName = context.packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA).metaData?.getString("com.google.firebase.messaging.default_notification_icon") ?: "ic_notification"
-                    context.applicationInfo.icon
+                    else -> context.resources.getIdentifier(
+                        basicNotification.smallIconDrawable,
+                        "drawable",
+                        context.packageName
+                    )
                 }
-                else -> context.resources.getIdentifier(basicNotification.smallIconDrawable, "drawable", context.packageName)
+                if (defaultSmallIcon == 0) {
+                    defaultSmallIcon = context.applicationInfo.icon
+                }
+                builder.setSmallIcon(defaultSmallIcon)
+            } catch (e: Exception) {
+                builder.setSmallIcon(context.applicationInfo.icon)
             }
 
-            builder.setSmallIcon(defaultSmallIcon)
             builder.setChannelId(notificationModel.notificationChannel.id)
 
             basicNotification.priority.let { priority ->
@@ -297,25 +317,25 @@ private fun createOnDismissedIntent(
 
             notificationModel.bigPicture?.let { bigPicture ->
                 basicNotification.largeIconUrl?.takeIf { it.isNotBlank() }?.let { url ->
-                        try {
-                            context.run {
-                                val isNetworkOnline = NetworkDetails.isOnline(context)
-                                if (!isNetworkOnline) {
-                                    val icon: Bitmap = Glide.with(context)
-                                        .asBitmap()
-                                        .apply(
-                                            RequestOptions().encodeFormat(Bitmap.CompressFormat.JPEG)
-                                                .encodeQuality(50)
-                                        )
-                                        .load(url)
-                                        .submit()
-                                        .get()
-                                    builder.setLargeIcon(icon)
-                                }
+                    try {
+                        context.run {
+                            val isNetworkOnline = NetworkDetails.isOnline(context)
+                            if (!isNetworkOnline) {
+                                val icon: Bitmap = Glide.with(context)
+                                    .asBitmap()
+                                    .apply(
+                                        RequestOptions().encodeFormat(Bitmap.CompressFormat.JPEG)
+                                            .encodeQuality(50)
+                                    )
+                                    .load(url)
+                                    .submit()
+                                    .get()
+                                builder.setLargeIcon(icon)
                             }
-                        } catch (error: Exception) {
-                            Logger.i(TAG, "showNotification: Image download failed")
                         }
+                    } catch (error: Exception) {
+                        Logger.i(TAG, "showNotification: Image download failed")
+                    }
 
                 }
             }
@@ -350,7 +370,7 @@ private fun createOnDismissedIntent(
                             context.resources.getIdentifier(it, "drawable", context.packageName)
                         } ?: 0
 
-                        val actionIntent = createActionClickIntent(context, id, notification.callback, actionObj.link, actionObj.title, notification.toString())
+                        val actionIntent = createActionClickIntent(context, id, notification.callback, actionObj.link, actionObj.title, notification.additional_data)
 
                         builder.addAction(actionIcon, actionObj.title, actionIntent)
                     }
@@ -358,7 +378,7 @@ private fun createOnDismissedIntent(
             } catch (e: Exception) {
                 Logger.d("notification", "setNotificationAction", e)
             }
-            notification.callback?.let { FynoCallback().updateStatus(it, MessageStatus.RECEIVED) }
+            notification.callback?.let { FynoCallback().updateStatus(context,it, MessageStatus.RECEIVED) }
             notificationManager.notify(id, builder.build())
         } catch (e: Exception) {
             Logger.d(TAG, "showNotification", e)
@@ -416,7 +436,7 @@ private fun createOnDismissedIntent(
             pictureStyle.setSummaryText(it)
         }
         if(Build.VERSION.SDK_INT >= 31)
-        pictureStyle.showBigPictureWhenCollapsed(true)
+            pictureStyle.showBigPictureWhenCollapsed(true)
         builder.setStyle(pictureStyle)
     }
 

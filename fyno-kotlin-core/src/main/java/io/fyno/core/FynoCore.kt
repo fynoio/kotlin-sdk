@@ -85,7 +85,8 @@ class FynoCore {
                             version = getString("VERSION")
                         )
                         RequestHandler.requestPOST(mergeEndpoint, null, "PATCH")
-                    } else {
+                    }
+                    if(!name?.isEmpty()!!) {
                         val upsertEndpoint = FynoUtils().getEndpoint(
                             "upsert_profile",
                             FynoUser.getWorkspace(),

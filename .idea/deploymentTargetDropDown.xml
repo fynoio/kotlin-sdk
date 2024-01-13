@@ -2,19 +2,16 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
-      <entry key="WeatherApp:fyno-kotlin-callback [build]">
+      <entry key="WeatherApp:fyno-kotlin-push [build]">
         <State />
       </entry>
-      <entry key="WeatherApp:fyno-kotlin-callback [publish]">
+      <entry key="WeatherApp:fyno-kotlin-push [publish]">
         <State />
       </entry>
-      <entry key="WeatherApp:fyno-kotlin-core [buildDependents]">
+      <entry key="WeatherApp:fyno-kotlin-sdk [build]">
         <State />
       </entry>
-      <entry key="WeatherApp:fyno-kotlin-core [build]">
-        <State />
-      </entry>
-      <entry key="WeatherApp:fyno-kotlin-core [publish]">
+      <entry key="WeatherApp:fyno-kotlin-sdk [publish]">
         <State />
       </entry>
       <entry key="app">

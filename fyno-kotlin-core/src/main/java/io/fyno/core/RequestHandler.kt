@@ -1,110 +1,93 @@
 package io.fyno.core
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkCapabilities
-import android.os.Build
-import android.provider.Telephony.Mms.Sent
+import android.database.Cursor
 import android.util.Log
-import androidx.annotation.RequiresApi
 import io.fyno.core.FynoCore.Companion.TAG
 import io.fyno.core.utils.FynoContextCreator
 import io.fyno.core.utils.Logger
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 import org.json.JSONObject
 import java.io.OutputStream
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.LinkedList
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.Date
 import kotlin.math.pow
+import io.fyno.core.helpers.SQLDataHelper
 
 object RequestHandler {
-    private const val TIMEOUT = 30000
+    private const val TIMEOUT = 6000
     private const val MAX_BACKOFF_DELAY: Long = 60000
     private const val MAX_RETRIES = 3
-
-    // Channel for queuing requests
-    private val requestChannel = Channel<Request>()
-
-    // Queue for offline requests
-    internal val offlineRequestsQueue: ConcurrentLinkedQueue<Request> = ConcurrentLinkedQueue()
-
-    // Network callback to listen for connectivity changes
-    private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private lateinit var sqlDataHelper: SQLDataHelper
 
     data class Request(val url: String?, val postData: JSONObject?, val method: String = "POST")
+
+    private fun isCallBackRequest(url:String?):Boolean{
+        return !url.isNullOrEmpty() && url.contains("callback.fyno.io")
+    }
 
     @Throws(Exception::class)
     suspend fun requestPOST(
         r_url: String?,
         postDataParams: JSONObject?,
         method: String = "POST",
+        context: Context? = null
     ) {
         try {
             val request = Request(r_url, postDataParams, method)
-            if(FynoContextCreator.isInitialized()){
-                if (isNetworkConnected(FynoContextCreator.context)) {
-                    processOfflineRequests()
-                    // If there is network, send the request immediately
-                    sendRequest(request)
-                } else {
-                    // If no network, add the request to the offline queue
-                    offlineRequestsQueue.add(request)
+            if (FynoContextCreator.isInitialized()) {
+                if(isCallBackRequest(r_url)){
+                    saveCBRequestToDb(request, context)
+                    processCBRequests(context,"requestPOST")
+                } else{
+                    saveRequestToDb(request)
+                    processDbRequests("requestPOST")
                 }
             } else {
-                sendRequest(request)
+                if(isCallBackRequest(r_url)) {
+                    saveCBRequestToDb(request, context)
+                    processCBRequests(context,"requestPOST")
+                }
             }
-            // Check if there's network connectivity
-
         } catch (e: Exception) {
             Logger.w(TAG, "requestPOST: Failed to send request - ${e.message}")
         }
     }
 
-    // Function to send the request to the channel
-    private suspend fun sendRequest(request: Request) {
-        try {
-            Logger.i(TAG, "requestPOST: Started processing ${request.url}")
-            // Send the request to the channel
-            requestChannel.send(request)
-        } catch (e: Exception) {
-            Logger.w(TAG, "sendRequest: Failed to send request to channel - ${e.message}")
-        }
+
+    // Function to save requests to SQLite database
+    private fun saveRequestToDb(request: Request, id:Int? = 0) {
+        FynoContextCreator.sqlDataHelper.insertRequest(request, "requests", id)
     }
 
-    // Function to check network connectivity
-    private fun isNetworkConnected(context: Context): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    // Function to save CB requests to SQLite database
+    private fun saveCBRequestToDb(request: Request, context: Context?) {
+        sqlDataHelper = SQLDataHelper(context)
+        sqlDataHelper.insertRequest(request, "callbacks")
+        sqlDataHelper.close()
+    }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-            return capabilities != null && (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI))
-        } else {
-            // Fallback for older Android versions
-            @Suppress("DEPRECATION")
-            val networkInfo = connectivityManager.activeNetworkInfo
-
-            if (networkInfo != null) {
-                return networkInfo.isConnected
-            }
-
-            // If networkInfo is null, there's no active network (no network connectivity)
-            return false
-        }
+    private fun deleteCBRequestFromDb(id: Int?, context: Context?) {
+        sqlDataHelper = SQLDataHelper(context)
+        sqlDataHelper.deleteRequestByID(id, "callbacks")
+        sqlDataHelper.close()
     }
 
     // Function to handle the retry mechanism
-    private suspend fun handleRetries(request: Request) {
+    private suspend fun handleRetries(
+        request: Request,
+        id: Int? = 0,
+        context: Context? = null
+    ): Boolean {
         var retries = 0
         while (retries < MAX_RETRIES) {
             try {
                 // Attempt the request
-                doRequest(request)
-                return  // Request successful, exit the retry loop
+                doRequest(request, id, context)
+                return true // Request successful, exit the retry loop
             } catch (e: Exception) {
                 Logger.d(TAG, "Request failed: ${e.message}")
                 // Implement a backoff strategy here (e.g., exponential backoff)
@@ -114,23 +97,24 @@ object RequestHandler {
             }
         }
         Logger.w(TAG, "Max retries reached for request: ${request.url}")
-        offlineRequestsQueue.add(request)
-    }
-
-    // Coroutine to process requests from the channel
-    private val requestProcessor = CoroutineScope(Dispatchers.IO).launch {
-        for (request in requestChannel) {
-            handleRetries(request)
+        if (isCallBackRequest(request.url)) {
+            sqlDataHelper= SQLDataHelper(context)
+            sqlDataHelper.updateStatusAndLastProcessedTime(id,"callbacks","not_processed")
+            sqlDataHelper.close()
+        } else {
+            FynoContextCreator.sqlDataHelper.updateStatusAndLastProcessedTime(id, "requests", "not_processed")
         }
+        return false
     }
 
     private fun calculateDelay(retryCount: Int): Long {
-        return minOf(2.0.pow(retryCount.toDouble()).toLong(), MAX_BACKOFF_DELAY)
+        return minOf(4.0.pow(retryCount.toDouble()).toLong() * 1000, MAX_BACKOFF_DELAY)
     }
 
     @Throws(Exception::class)
-    private fun doRequest(request: Request) {
+    private fun doRequest(request: Request, id: Int? = 0, context: Context? = null) {
         val url = URL(request.url)
+        URL(url.protocol, url.host, 3000, url.file)
         val conn: HttpURLConnection = url.openConnection() as HttpURLConnection
         conn.setRequestProperties()
         conn.readTimeout = TIMEOUT
@@ -152,21 +136,34 @@ object RequestHandler {
 
         Logger.d(
             "RequestPost",
-            "requestPOST method = ${request.method} params=${request.postData.toString()} url = ${request.url}: ${conn.responseMessage}"
+            "requestPOST method = ${request.method} params=${request.postData.toString()} url = ${request.url}: ${conn.responseMessage} || time: ${Date().time}"
         )
 
         when (responseCode) {
             in 200..299 -> {
                 Logger.i("RequestPost", "requestPOST: ${conn.responseMessage}")
+                if(isCallBackRequest(request.url)) {
+                    deleteCBRequestFromDb(id,context)
+                    return
+                }
+                FynoContextCreator.sqlDataHelper.deleteRequestByID(id, "requests")
             }
+
             in 400..499 -> {
-                Logger.i(TAG,"Request failed with response code: $responseCode")
+                Logger.i(TAG, "Request failed with response code: $responseCode")
+                if (isCallBackRequest(request.url)) {
+                    deleteCBRequestFromDb(id, context)
+                    return
+                }
+                FynoContextCreator.sqlDataHelper.deleteRequestByID(id, "requests")
             }
+
             else -> {
-                Logger.i(TAG,"Request failed with response code: $responseCode")
+                Logger.i(TAG, "Request failed with response code: $responseCode")
                 throw Exception("Request failed with response code: $responseCode")
             }
         }
+        conn.disconnect()
     }
 
     private fun HttpURLConnection.setRequestProperties() {
@@ -176,15 +173,88 @@ object RequestHandler {
         }
     }
 
-    // Function to process offline requests
-    suspend fun processOfflineRequests() {
+    // Function to process requests from SQLite database
+    @SuppressLint("Range")
+    suspend fun processDbRequests(caller: String? = "") {
+        var cursor: Cursor? = null
         try {
-            for (request in offlineRequestsQueue) {
-                sendRequest(request)
+            while (true) {
+                // Retrieve one request from SQLite database
+                cursor = FynoContextCreator.sqlDataHelper.getNextRequest()
+
+                if (cursor.moveToNext()) {
+                    val url = cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_URL))
+                    val postDataStr =
+                        cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_POST_DATA))
+                    val postData = if (postDataStr != null) JSONObject(postDataStr) else null
+                    val method =
+                        cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_METHOD))
+                    val id = cursor.getInt(cursor.getColumnIndex(SQLDataHelper.COLUMN_ID))
+                    val lastProcessedTimeMillis =
+                        cursor.getLong(cursor.getColumnIndex(SQLDataHelper.COLUMN_LAST_PROCESSED_AT))
+                    val timeDifference = System.currentTimeMillis() - lastProcessedTimeMillis
+
+                    if (caller != "requestPOST" && timeDifference < 2000) {
+                        // Skip this record as the last update time is less than 2 seconds ago
+                        continue
+                    }
+
+                    FynoContextCreator.sqlDataHelper.updateStatusAndLastProcessedTime(id,"requests","processing")
+
+                    val request = Request(url, postData, method)
+                    if (!handleRetries(request, id)) {
+                        break
+                    }
+                } else {
+                    break
+                }
             }
-            offlineRequestsQueue.clear()
-        } catch (e: Exception) {
-            Logger.w(TAG, e.message.toString())
+        } finally {
+            cursor?.close()
+        }
+    }
+
+    // Function to process requests from SQLite database
+    @SuppressLint("Range")
+    suspend fun processCBRequests(context: Context?, caller:String? = "") {
+        // Retrieve requests from SQLite database
+        var cursor: Cursor? = null
+        try {
+            sqlDataHelper = SQLDataHelper(context)
+            while (true) {
+                // Retrieve one request from SQLite database
+                cursor = sqlDataHelper.getNextCBRequest()
+
+                if (cursor.moveToNext()) {
+                    val url = cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_URL))
+                    val postDataStr =
+                        cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_POST_DATA))
+                    val postData = if (postDataStr != null) JSONObject(postDataStr) else null
+                    val method =
+                        cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_METHOD))
+                    val id = cursor.getInt(cursor.getColumnIndex(SQLDataHelper.COLUMN_ID))
+                    val lastProcessedTimeMillis = cursor.getLong(cursor.getColumnIndex(SQLDataHelper.COLUMN_LAST_PROCESSED_AT))
+                    val timeDifference = System.currentTimeMillis() - lastProcessedTimeMillis
+
+                    if (caller != "requestPOST" && timeDifference < 2000) {
+                        // Skip this record as the last update time is less than 2 seconds ago
+                        continue
+                    }
+
+                    sqlDataHelper.updateStatusAndLastProcessedTime(id,"callbacks","processing")
+
+                    val request = Request(url, postData, method)
+                    runBlocking {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            handleRetries(request, id, context)
+                        }
+                    }
+                } else {
+                    break
+                }
+            }
+        } finally {
+            cursor?.close()
         }
     }
 }

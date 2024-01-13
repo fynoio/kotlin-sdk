@@ -18,7 +18,7 @@ class NotificationDismissedReceiver : BroadcastReceiver() {
             Logger.d("NotificationDismissed", "onReceive: $callback")
             if (callback != null) {
                 runBlocking(Dispatchers.IO) {
-                    FynoCallback().updateStatus(callback, MessageStatus.DISMISSED)
+                    FynoCallback().updateStatus(context, callback, MessageStatus.DISMISSED)
                 }
             }
             val cintent = Intent()
