@@ -82,7 +82,7 @@ object NotificationHelper {
         val intent = Intent(context, NotificationClickActivity::class.java)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.notificationId", notificationId)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.callback", callbackUrl)
-        intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras)
+intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         if(action.isNullOrEmpty()){
             intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.action", context.packageManager.getLaunchIntentForPackage(context.packageName)?.component?.className.toString())
@@ -109,7 +109,7 @@ object NotificationHelper {
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.notificationId", notificationId)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.callback", callbackUrl)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationActionClickClickedReceiver.label", label)
-        intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString())
+intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString())
         intent.action = action
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         return PendingIntent.getActivity(

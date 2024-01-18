@@ -35,7 +35,8 @@ class FynoPush {
             val mNotificationManager = FynoCore.appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             if(!mNotificationManager.areNotificationsEnabled())
                 FynoCore.appContext.startActivity(intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or  Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK ))
-            else {
+            else
+                FynoUser.getFcmToken()?.let { FynoUser.setFcmToken(it) }
                 Logger.i(FcmHandlerService.TAG, "Notification Permissions are allowed")
             }
             GetPermissions().permissionResultManager(mNotificationManager.areNotificationsEnabled())
