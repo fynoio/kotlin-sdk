@@ -11,8 +11,9 @@ import io.fyno.callback.FynoCallback
 import io.fyno.core.FynoCore
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.utils.Logger
-import io.fyno.pushlibrary.FynoPush
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 

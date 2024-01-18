@@ -8,19 +8,15 @@ import io.fyno.callback.FynoCallback
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.FynoCore
 import io.fyno.core.utils.Logger
-import io.fyno.pushlibrary.FynoPush
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.json.JSONObject
 import java.lang.Exception
 interface NotificationClickHandler {
     fun onNotificationClicked(extras: Bundle)
 }
 open class NotificationClickActivity : Activity() {
-    private var notificationHandler: NotificationClickHandler? = null
-    fun setNotificationHandler(handler: NotificationClickHandler) {
-        notificationHandler = handler
-    }
     private val ACTION_NOTIFICATION_CLICK: String = "io.fyno.pushlibrary.NOTIFICATION_ACTION"
     override fun onCreate(savedInstanceState: Bundle?) {
         try {

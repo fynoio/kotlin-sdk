@@ -4,7 +4,9 @@ import io.fyno.core.utils.FynoUtils
 import io.fyno.core.helpers.Config
 import io.fyno.core.utils.FynoContextCreator
 import io.fyno.core.utils.Logger
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
@@ -12,33 +14,39 @@ object FynoUser {
     private const val TAG = "FynoUser"
     private fun updatePush(tokenType: String, token: String) {
         if (getIdentity().isNotEmpty() && getWorkspace().isNotEmpty()) {
-            runBlocking(Dispatchers.IO) {
-                try {
-                    val endpoint = FynoUtils().getEndpoint(
-                        "update_channel",
-                        getWorkspace(),
-                        profile = getIdentity(),
-                        version = FynoCore.getString("VERSION")
-                    )
-                    val notificationStatus = if (FynoCore.areNotificationPermissionsEnabled()) 1 else 0
-                    val requestBody = JSONObject().apply {
-                        put("channel", JSONObject().apply {
-                            put("push", JSONArray(listOf(JSONObject().apply {
-                                put("token", "$tokenType:$token")
-                                put("integration_id", getIntegrationId(tokenType))
-                                put("status", notificationStatus)
-                            })))
-                        })
-                    }
-                    RequestHandler.requestPOST(endpoint, requestBody, "PATCH")
-                    FynoContextCreator.sqlDataHelper.insertConfigByKey(
-                        Config(
-                            key = "fyno_${tokenType}_token",
-                            value = token
+            runBlocking {
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val endpoint = FynoUtils().getEndpoint(
+                            "update_channel",
+                            getWorkspace(),
+                            profile = getIdentity(),
+                            version = FynoCore.getString("VERSION")
                         )
-                    )
-                } catch (e: Exception) {
-                    Logger.d(TAG, "Exception in set${tokenType.capitalize()}Token: ${e.message}")
+                        val notificationStatus =
+                            if (FynoCore.areNotificationPermissionsEnabled()) 1 else 0
+                        val requestBody = JSONObject().apply {
+                            put("channel", JSONObject().apply {
+                                put("push", JSONArray(listOf(JSONObject().apply {
+                                    put("token", "$tokenType:$token")
+                                    put("integration_id", getIntegrationId(tokenType))
+                                    put("status", notificationStatus)
+                                })))
+                            })
+                        }
+                        RequestHandler.requestPOST(endpoint, requestBody, "PATCH")
+                        FynoContextCreator.sqlDataHelper.insertConfigByKey(
+                            Config(
+                                key = "fyno_${tokenType}_token",
+                                value = token
+                            )
+                        )
+                    } catch (e: Exception) {
+                        Logger.d(
+                            TAG,
+                            "Exception in set${tokenType.capitalize()}Token: ${e.message}"
+                        )
+                    }
                 }
             }
         }
@@ -46,28 +54,30 @@ object FynoUser {
 
     private fun updateChannel(channel: String, token: String) {
         if (getIdentity().isNotEmpty() && getWorkspace().isNotEmpty()) {
-            runBlocking(Dispatchers.IO) {
-                try {
-                    val endpoint = FynoUtils().getEndpoint(
-                        "update_channel",
-                        getWorkspace(),
-                        profile = getIdentity(),
-                        version = FynoCore.getString("VERSION")
-                    )
-                    val requestBody = JSONObject().apply {
-                        put("channel", JSONObject().apply {
-                            put(channel, token)
-                        })
-                    }
-                    RequestHandler.requestPOST(endpoint, requestBody, "PATCH")
-                    FynoContextCreator.sqlDataHelper.insertConfigByKey(
-                        Config(
-                            key = "fyno_${channel}",
-                            value = token
+            runBlocking {
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val endpoint = FynoUtils().getEndpoint(
+                            "update_channel",
+                            getWorkspace(),
+                            profile = getIdentity(),
+                            version = FynoCore.getString("VERSION")
                         )
-                    )
-                } catch (e: Exception) {
-                    Logger.d(TAG, "Exception in set${channel}: ${e.message}")
+                        val requestBody = JSONObject().apply {
+                            put("channel", JSONObject().apply {
+                                put(channel, token)
+                            })
+                        }
+                        RequestHandler.requestPOST(endpoint, requestBody, "PATCH")
+                        FynoContextCreator.sqlDataHelper.insertConfigByKey(
+                            Config(
+                                key = "fyno_${channel}",
+                                value = token
+                            )
+                        )
+                    } catch (e: Exception) {
+                        Logger.d(TAG, "Exception in set${channel}: ${e.message}")
+                    }
                 }
             }
         }
