@@ -7,7 +7,9 @@ import io.fyno.callback.FynoCallback
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.FynoCore
 import io.fyno.core.utils.Logger
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class NotificationDismissedReceiver : BroadcastReceiver() {
@@ -17,8 +19,10 @@ class NotificationDismissedReceiver : BroadcastReceiver() {
             val callback = intent.extras!!.getString("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.callback")
             Logger.d("NotificationDismissed", "onReceive: $callback")
             if (callback != null) {
-                runBlocking(Dispatchers.IO) {
-                    FynoCallback().updateStatus(callback, MessageStatus.DISMISSED)
+                runBlocking {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        FynoCallback().updateStatus(context, callback, MessageStatus.DISMISSED)
+                    }
                 }
             }
             val cintent = Intent()

@@ -70,7 +70,7 @@ class MiPushHelper : PushMessageReceiver() {
         } else {
             val callback = JSONObject(message.content).optString("callback")
             if (!callback.isNullOrBlank()) {
-                FynoCallback().updateStatus(callback, MessageStatus.RECEIVED)
+                FynoCallback().updateStatus(context, callback, MessageStatus.RECEIVED)
             }
         }
     }

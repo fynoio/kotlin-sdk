@@ -10,8 +10,9 @@ import io.fyno.callback.FynoCallback
 import io.fyno.core.FynoCore
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.utils.Logger
-import io.fyno.pushlibrary.FynoPush
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 
@@ -52,12 +53,15 @@ class NotificationActionClickActivity : AppCompatActivity() {
             intent.extras!!.getString("io.fyno.kotlin_id.notificationIntents.notificationActionClickClickedReceiver.label")
         Logger.d("${FynoCore.TAG}-NotificationActionClick", "onReceive: $callback")
         if (callback != null) {
-            runBlocking(Dispatchers.IO) {
-                FynoCallback().updateStatus(
-                    callback,
-                    MessageStatus.CLICKED,
-                    JSONObject().put("label", label).put("action", action)
-                )
+            runBlocking {
+                CoroutineScope(Dispatchers.IO).launch {
+                    FynoCallback().updateStatus(
+                        applicationContext,
+                        callback,
+                        MessageStatus.CLICKED,
+                        JSONObject().put("label", label).put("action", action)
+                    )
+                }
             }
         }
         if (action != null) {
@@ -87,8 +91,7 @@ class NotificationActionClickActivity : AppCompatActivity() {
                 }
             }
         }
-//        putExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
-//        FynoPush.PushObject.handleActionClick(intent.extras!!.getString("io.fyno.kotlin_sdk.notificationIntents.extras"))
+
         val mNotificationManager =
             this.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         mNotificationManager.cancel(notificationId)
