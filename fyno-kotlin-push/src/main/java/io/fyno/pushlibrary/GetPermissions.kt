@@ -6,6 +6,7 @@ import android.icu.lang.UCharacter.GraphemeClusterBreak.T
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -21,14 +22,25 @@ internal class GetPermissions : AppCompatActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        if (isGranted) {
-            FynoUser.getFcmToken()?.let { FynoUser.setFcmToken(it) }
-            Toast.makeText(this, "Notifications permission granted", Toast.LENGTH_SHORT)
-                .show()
+        permissionResultManager(isGranted)
+    }
+
+    public fun permissionResultManager(result: Boolean) {
+        if (result) {
+            FynoUser.getFcmToken()?.let {
+                FynoUser.setFcmToken(it)
+            }
+            FynoUser.getMiToken()?.let {
+                FynoUser.setMiToken(it)
+            }
+            Log.d("PermissionDialog", "Notifications permission granted")
+//            Toast.makeText(this, "Notifications permission granted", Toast.LENGTH_SHORT)
+//                .show()
         } else {
-            Toast.makeText(
-                this, "Can't post notifications without POST_NOTIFICATIONS permission",
-                Toast.LENGTH_LONG).show()
+            Log.d("PermissionDialog", "Can't post notifications without POST_NOTIFICATIONS permission")
+//            Toast.makeText(
+//                this, "Can't post notifications without POST_NOTIFICATIONS permission",
+//                Toast.LENGTH_LONG).show()
         }
     }
 

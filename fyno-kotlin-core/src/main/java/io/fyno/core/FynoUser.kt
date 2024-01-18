@@ -1,7 +1,5 @@
 package io.fyno.core
 
-import android.util.Log
-import androidx.core.app.NotificationManagerCompat
 import io.fyno.core.utils.FynoUtils
 import io.fyno.core.helpers.Config
 import io.fyno.core.utils.FynoContextCreator
