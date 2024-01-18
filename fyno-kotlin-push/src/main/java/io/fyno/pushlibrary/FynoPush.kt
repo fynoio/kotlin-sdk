@@ -20,6 +20,8 @@ import io.fyno.core.utils.Logger
 import io.fyno.pushlibrary.firebase.FcmHandlerService
 import io.fyno.pushlibrary.mipush.MiPushHelper
 import io.fyno.pushlibrary.models.PushRegion
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.Delayed
 
 class FynoPush {
@@ -43,9 +45,14 @@ class FynoPush {
 
     private fun registerFCM(FCM_Integration_Id: String){
         try {
-            FynoUser.setFcmIntegration(FCM_Integration_Id)
-            FirebaseApp.initializeApp(FynoContextCreator.context.applicationContext)
-            saveFcmToken()
+            runBlocking(Dispatchers.IO){
+                if(!FynoContextCreator.isInitialized()) {
+                    return@runBlocking
+                }
+                FynoUser.setFcmIntegration(FCM_Integration_Id)
+                FirebaseApp.initializeApp(FynoContextCreator.context.applicationContext)
+                saveFcmToken()
+            }
         } catch (e:Exception) {
             Logger.w(FcmHandlerService.TAG,"Unable to register FCM", e)
         }
