@@ -72,11 +72,13 @@ public class FynoCore {
                 FynoUtils fynoUtils = new FynoUtils();
                 String mergeEndpoint = fynoUtils.getEndpoint("merge_profile", FynoUser.getWorkspace(),FynoConstants.ENV, oldDistinctId, uniqueId, getString("VERSION"));
                 RequestHandler.requestPOST(mergeEndpoint, null, "PATCH");
-            } else {
-                FynoUtils fynoUtils = new FynoUtils();
-                String upsertEndpoint = fynoUtils.getEndpoint("upsert_profile", FynoUser.getWorkspace(),FynoConstants.ENV, uniqueId,null, getString("VERSION"));
-                RequestHandler.requestPOST(upsertEndpoint, getParamsObj(uniqueId, name), "PUT");
             }
+            if(!name.isEmpty()){
+            FynoUtils fynoUtils = new FynoUtils();
+            String upsertEndpoint = fynoUtils.getEndpoint("upsert_profile", FynoUser.getWorkspace(),FynoConstants.ENV, uniqueId,null, getString("VERSION"));
+            RequestHandler.requestPOST(upsertEndpoint, getParamsObj(uniqueId, name), "PUT");
+            }
+
         }
         FynoUser.identify(uniqueId);
     }

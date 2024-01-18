@@ -26,13 +26,8 @@ public object FynoSdk {
         runBlocking {
             CoroutineScope(Dispatchers.IO).launch {
                 FynoCore.initialize(context, workspaceId, token, version)
-                userId?.let {
-                    FynoCore.identify(uniqueId = it, update = true)
-                    // Sentry.configureScope {
-                    //     val user = User()
-                    //     user.id = userId
-                    //     it.user = user
-                    // }
+                if (!userId.isNullOrBlank()) {
+                    FynoCore.identify(uniqueId = userId, update = true)
                 }
             }
         }

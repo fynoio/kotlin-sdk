@@ -20,9 +20,12 @@ import io.fyno.core.utils.Logger
 import io.fyno.pushlibrary.firebase.FcmHandlerService
 import io.fyno.pushlibrary.mipush.MiPushHelper
 import io.fyno.pushlibrary.models.PushRegion
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.Delayed
 
 class FynoPush {
-    fun showPermissionDialog(){
+    fun showPermissionDialog(delay: Long = 0){
         Log.i(FynoCore.TAG, "showPermissionDialog: Im triggered")
         if(Build.VERSION.SDK_INT <= 24)
             return
@@ -35,15 +38,22 @@ class FynoPush {
             else
                 FynoUser.getFcmToken()?.let { FynoUser.setFcmToken(it) }
                 Logger.i(FcmHandlerService.TAG, "Notification Permissions are allowed")
-        },5000);
+            }
+            GetPermissions().permissionResultManager(mNotificationManager.areNotificationsEnabled())
+        },delay);
     }
 
 
     private fun registerFCM(FCM_Integration_Id: String){
         try {
-            FynoUser.setFcmIntegration(FCM_Integration_Id)
-            FirebaseApp.initializeApp(FynoContextCreator.context.applicationContext)
-            saveFcmToken()
+            runBlocking(Dispatchers.IO){
+                if(!FynoContextCreator.isInitialized()) {
+                    return@runBlocking
+                }
+                FynoUser.setFcmIntegration(FCM_Integration_Id)
+                FirebaseApp.initializeApp(FynoContextCreator.context.applicationContext)
+                saveFcmToken()
+            }
         } catch (e:Exception) {
             Logger.w(FcmHandlerService.TAG,"Unable to register FCM", e)
         }
