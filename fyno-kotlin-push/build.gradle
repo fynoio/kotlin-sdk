@@ -35,10 +35,10 @@ android {
 }
 
 dependencies {
-//    implementation 'io.fyno.kotlin-sdk:core:1.0.13'
-//    implementation 'io.fyno.kotlin-sdk:callback:1.0.5'
-    implementation project(path: ':fyno-kotlin-callback')
-    implementation project(path: ':fyno-kotlin-core')
+    implementation 'io.fyno.kotlin-sdk:core:1.0.14'
+    implementation 'io.fyno.kotlin-sdk:callback:1.0.6'
+//    implementation project(path: ':fyno-kotlin-callback')
+//    implementation project(path: ':fyno-kotlin-core')
     compileOnly fileTree(include: ["*.jar", "*.aar"], dir: "libs")
     implementation 'com.google.firebase:firebase-messaging-ktx:23.3.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
