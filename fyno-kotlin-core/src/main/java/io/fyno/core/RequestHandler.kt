@@ -169,7 +169,10 @@ object RequestHandler {
     private fun HttpURLConnection.setRequestProperties() {
         this.setRequestProperty("Content-Type", "application/json")
         if (FynoContextCreator.isInitialized()) {
-            this.setRequestProperty("Authorization", "Bearer ${FynoUser.getApi()}")
+            this.setRequestProperty("x-fn-app-id", FynoContextCreator.context.packageName)
+            this.setRequestProperty("integration", FynoUser.getFynoIntegration())
+            this.setRequestProperty("verify_token", FynoUser.getApi())
+
         }
     }
 

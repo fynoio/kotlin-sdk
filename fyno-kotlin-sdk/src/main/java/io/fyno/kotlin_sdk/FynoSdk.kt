@@ -1,6 +1,8 @@
 package io.fyno.kotlin_sdk
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import io.fyno.callback.FynoCallback
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.FynoCore
@@ -19,20 +21,16 @@ public object FynoSdk {
     fun initialize(
         context: Context,
         workspaceId: String,
+        integrationId: String,
         token: String,
         userId: String? = null,
         version: String = "live"
     ) {
         runBlocking {
             CoroutineScope(Dispatchers.IO).launch {
-                FynoCore.initialize(context, workspaceId, token, version)
-                userId?.let {
-                    FynoCore.identify(uniqueId = it, update = true)
-                    // Sentry.configureScope {
-                    //     val user = User()
-                    //     user.id = userId
-                    //     it.user = user
-                    // }
+                FynoCore.initialize(context, workspaceId, integrationId, token, version)
+                if (!userId.isNullOrBlank()) {
+                    FynoCore.identify(uniqueId = userId, update = true)
                 }
             }
         }
@@ -46,14 +44,16 @@ public object FynoSdk {
         xiaomiApplicationId: String? = "",
         xiaomiApplicationKey: String? = "",
         pushRegion: PushRegion? = PushRegion.INDIA,
-        integrationId: String = ""
     ) {
-        FynoPush().registerPush(
-            xiaomiApplicationId,
-            xiaomiApplicationKey,
-            pushRegion,
-            integrationId
-        )
+        CoroutineScope(Dispatchers.IO).launch {
+            Handler(Looper.getMainLooper()).postDelayed({
+                FynoPush().registerPush(
+                    xiaomiApplicationId,
+                    xiaomiApplicationKey,
+                    pushRegion
+                )
+            }, 5000);
+        }
     }
 
     fun identify(uniqueId: String, userName: String? = null) {
@@ -74,10 +74,6 @@ public object FynoSdk {
 
     fun resetConfig() {
         FynoCore.resetConfig()
-    }
-
-    fun saveConfig(wsId: String, apiKey: String, fcmIntegration: String, miIntegration: String) {
-        FynoCore.saveConfig(wsId, apiKey, fcmIntegration, miIntegration)
     }
 
     fun setLogLevel(level: LogLevel) {
