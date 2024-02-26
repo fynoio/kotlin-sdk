@@ -15,7 +15,6 @@
             <option value="$PROJECT_DIR$/fyno-kotlin-inapp" />
             <option value="$PROJECT_DIR$/fyno-kotlin-push" />
             <option value="$PROJECT_DIR$/fyno-kotlin-sdk" />
-            <option value="$PROJECT_DIR$/java-sdk" />
           </set>
         </option>
       </GradleProjectSettings>

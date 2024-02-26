@@ -44,7 +44,8 @@ class FynoCore {
             setString("WS_ID", WSId)
             setString("SECRET", token)
             setString("VERSION", version)
-            FynoUser.setWorkspace(WSId)
+            FynoUser.setFynoIntegration(integration)
+            FynoUser.setWorkspace(wsid)
             FynoUser.setApi(token)
 
             if (FynoUser.getIdentity().isEmpty()) {
@@ -129,19 +130,11 @@ class FynoCore {
             val notificationStatus = if (areNotificationPermissionsEnabled()) 1 else 0
 
             if (!fcmToken.isNullOrBlank()) {
-                pushObj.put(
-                    JSONObject().put("token", "fcm_token:$fcmToken")
-                        .put("integration_id", FynoUser.getFcmIntegration())
-                        .put("status", notificationStatus)
-                )
+                pushObj.put(JSONObject().put("token", "fcm_token:$fcmToken").put("integration_id", FynoUser.getFynoIntegration()).put("status", notificationStatus))
             }
 
             if (!xiaomiToken.isNullOrBlank()) {
-                pushObj.put(
-                    JSONObject().put("token", "mi_token:$xiaomiToken")
-                        .put("integration_id", FynoUser.getMiIntegration())
-                        .put("status", notificationStatus)
-                )
+                pushObj.put(JSONObject().put("token", "mi_token:$xiaomiToken").put("integration_id", FynoUser.getFynoIntegration()).put("status", notificationStatus))
             }
 
             if (pushObj.length() > 0) {
@@ -210,25 +203,8 @@ class FynoCore {
             }
             FynoUser.setWorkspace("")
             FynoUser.setApi("")
-            FynoUser.setMiIntegration("")
-            FynoUser.setFcmIntegration("")
+            FynoUser.setFynoIntegration("")
         }
-
-        fun saveConfig(
-            wsId: String,
-            apiKey: String,
-            fcmIntegration: String,
-            miIntegration: String
-        ) {
-            if (!FynoContextCreator.isInitialized()) {
-                Logger.d(TAG, "Fyno context not initialized - saveConfig rejected/failed")
-            }
-            FynoUser.setWorkspace(wsId)
-            FynoUser.setApi(apiKey)
-            FynoUser.setMiIntegration(miIntegration)
-            FynoUser.setFcmIntegration(fcmIntegration)
-        }
-
         fun setLogLevel(level: LogLevel) {
             Logger.Level = level
         }
