@@ -21,7 +21,6 @@ open class FcmHandlerService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         Logger.d(TAG, "onNewToken: $token")
-        FynoUser.setFcmToken(token)
         super.onNewToken(token)
     }
 

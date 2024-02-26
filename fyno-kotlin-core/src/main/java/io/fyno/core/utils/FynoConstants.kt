@@ -7,5 +7,5 @@ object FynoConstants {
     const val DEV_ENDPOINT = "https://api.dev.fyno.io/v1"
     const val PROD_ENDPOINT = "https://api.fyno.io/v1"
     const val EVENT_PATH = "event"
-    const val PROFILE = "profiles"
+    const val PROFILE = "profile"
 }
