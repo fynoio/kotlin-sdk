@@ -39,7 +39,7 @@ class FynoCore {
                 ContextWrapper.MODE_PRIVATE
             )
 
-            setString("WS_ID", WSId)
+            setString("WS_ID", wsid)
             setString("SECRET", token)
             setString("VERSION", version)
             FynoUser.setFynoIntegration(integration)
@@ -51,6 +51,7 @@ class FynoCore {
                 try {
                     runBlocking {
                         CoroutineScope(Dispatchers.IO).launch {
+                            JWTRequestHandler().fetchAndSetJWTToken(uuid)
                             val endpoint = FynoUtils().getEndpoint(
                                 "create_profile",
                                 FynoUser.getWorkspace(),
@@ -93,6 +94,7 @@ class FynoCore {
                                 version = getString("VERSION")
                             )
                             RequestHandler.requestPOST(mergeEndpoint, null, "PATCH")
+                            JWTRequestHandler().fetchAndSetJWTToken(uniqueId)
                         } else {
                             val upsertEndpoint = FynoUtils().getEndpoint(
                                 "upsert_profile",
