@@ -171,8 +171,8 @@ object RequestHandler {
         if (FynoContextCreator.isInitialized()) {
             this.setRequestProperty("x-fn-app-id", FynoContextCreator.context.packageName)
             this.setRequestProperty("integration", FynoUser.getFynoIntegration())
-            this.setRequestProperty("verify_token", FynoUser.getApi())
-
+            this.setRequestProperty("signature", FynoUser.getApi())
+            this.setRequestProperty("verify-token",FynoUser.getJWTToken())
         }
     }
 
