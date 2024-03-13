@@ -22,13 +22,12 @@ public object FynoSdk {
         context: Context,
         workspaceId: String,
         integrationId: String,
-        token: String,
         userId: String? = null,
         version: String = "live"
     ) {
         runBlocking {
             CoroutineScope(Dispatchers.IO).launch {
-                FynoCore.initialize(context, workspaceId, integrationId, token, version)
+                FynoCore.initialize(context, workspaceId, integrationId, version)
                 if (!userId.isNullOrBlank()) {
                     FynoCore.identify(uniqueId = userId, update = true)
                 }

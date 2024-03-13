@@ -25,7 +25,7 @@ class FynoCore {
         lateinit var appContext: Context
         private lateinit var fynoPreferences: SharedPreferences
 
-        fun initialize(context: Context, wsid: String, integration: String, token: String, version: String = "live") {
+        fun initialize(context: Context, wsid: String, integration: String, version: String = "live") {
             ConnectionStateMonitor().enable(context)
             require(wsid.isNotEmpty()) { "Workspace Id is empty" }
 
@@ -40,11 +40,9 @@ class FynoCore {
             )
 
             setString("WS_ID", wsid)
-            setString("SECRET", token)
             setString("VERSION", version)
             FynoUser.setFynoIntegration(integration)
             FynoUser.setWorkspace(wsid)
-            FynoUser.setApi(token)
 
             if (FynoUser.getIdentity().isEmpty()) {
                 val uuid = UUID.randomUUID().toString()

@@ -10,19 +10,16 @@ import java.util.Date
 
 class JWTRequestHandler {
     internal fun fetchAndSetJWTToken(distinctID: String) {
-        val url =
-            URL(FynoConstants.DEV_ENDPOINT + "/" + FynoUser.getWorkspace() + "/" + distinctID + "/token")
+        val url = URL(FynoConstants.PROD_ENDPOINT + "/" + FynoUser.getWorkspace() + "/" + distinctID + "/token")
         URL(url.protocol, url.host, 3000, url.file)
         val conn: HttpURLConnection = url.openConnection() as HttpURLConnection
         conn.requestMethod = "GET"
-        conn.doInput = true
-        conn.doOutput = true
 
         val responseCode: Int = conn.responseCode
 
         Logger.d(
-            "RequestPost",
-            "requestPOST method = GET url = $url: ${conn.responseMessage} || time: ${Date().time}"
+            "fetchAndSetJWTToken",
+            "fetchAndSetJWTToken method = ${conn.requestMethod} url = $url: ${conn.responseMessage} || time: ${Date().time}"
         )
 
         when (responseCode) {

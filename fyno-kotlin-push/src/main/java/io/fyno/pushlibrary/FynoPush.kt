@@ -20,6 +20,8 @@ import io.fyno.core.utils.Logger
 import io.fyno.pushlibrary.firebase.FcmHandlerService
 import io.fyno.pushlibrary.mipush.MiPushHelper
 import io.fyno.pushlibrary.models.PushRegion
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 
 class FynoPush {
     fun showPermissionDialog(){
