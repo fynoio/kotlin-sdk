@@ -104,7 +104,7 @@ class FynoPush {
         try {
             MiPushClient.registerPush(FynoCore.appContext,App_Id,App_Key)
             FynoUser.setFynoIntegration(Integration_Id)
-            com.xiaomi.mipush.sdk.Logger.setLogger(FynoCore.appContext, object : LoggerInterface {
+            com.xiaomi.mipush.sdk.Logger.setLogger(FynoCore.appContext, object: LoggerInterface {
                 override fun setTag(tag: String?) {
                     Logger.i(MiPushHelper.TAG, "XMPushTag : $tag")
                 }

@@ -26,9 +26,10 @@ class FynoCore {
         private lateinit var fynoPreferences: SharedPreferences
 
         fun initialize(context: Context, wsid: String, integration: String, version: String = "live") {
-            ConnectionStateMonitor().enable(context)
             require(wsid.isNotEmpty()) { "Workspace Id is empty" }
 
+            val sqlDataHelper = SQLDataHelper(context)
+            sqlDataHelper.updateAllRequestsToNotProcessed()
             appContext = context
             FynoContextCreator.context = appContext
             NetworkDetails.getNetworkType()
