@@ -23,7 +23,7 @@ class ConnectionStateMonitor : NetworkCallback() {
         cbContext = context
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        
+
         if(isNetworkCallbackRegistered) {
             connectivityManager.unregisterNetworkCallback(this)
         } else {
