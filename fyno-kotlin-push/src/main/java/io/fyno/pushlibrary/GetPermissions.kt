@@ -14,12 +14,6 @@ import io.fyno.core.FynoUser
 internal class GetPermissions : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         askNotificationPermission()
-        FynoUser.getFcmToken()?.let {
-            FynoUser.setFcmToken(it)
-        }
-        FynoUser.getMiToken()?.let {
-            FynoUser.setMiToken(it)
-        }
         super.onCreate(savedInstanceState)
         finish()
     }
@@ -30,6 +24,7 @@ internal class GetPermissions : AppCompatActivity() {
         if (isGranted) {
             Toast.makeText(this, "Notifications permission granted", Toast.LENGTH_SHORT)
                 .show()
+            updateUserPermissionStatus(true)
         } else {
             Toast.makeText(
                 this, "Can't post notifications without POST_NOTIFICATIONS permission",
@@ -44,6 +39,17 @@ internal class GetPermissions : AppCompatActivity() {
             ) {
             } else {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun updateUserPermissionStatus(isGranted: Boolean) {
+        if (isGranted) {
+            FynoUser.getFcmToken()?.let {
+                FynoUser.setFcmToken(it)
+            }
+            FynoUser.getMiToken()?.let {
+                FynoUser.setMiToken(it)
             }
         }
     }
