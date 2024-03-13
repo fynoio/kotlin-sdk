@@ -38,8 +38,6 @@ class FynoPush {
             else
                 FynoUser.getFcmToken()?.let { FynoUser.setFcmToken(it) }
                 Logger.i(FcmHandlerService.TAG, "Notification Permissions are allowed")
-            }
-            GetPermissions().permissionResultManager(mNotificationManager.areNotificationsEnabled())
         },delay);
     }
 
@@ -50,7 +48,7 @@ class FynoPush {
                 if(!FynoContextCreator.isInitialized()) {
                     return@runBlocking
                 }
-                FynoUser.setFcmIntegration(FCM_Integration_Id)
+                FynoUser.setFynoIntegration(FCM_Integration_Id)
                 FirebaseApp.initializeApp(FynoContextCreator.context.applicationContext)
                 saveFcmToken()
             }
@@ -106,8 +104,8 @@ class FynoPush {
     fun registerMiPush(App_Id: String, App_Key:String, Integration_Id: String){
         try {
             MiPushClient.registerPush(FynoCore.appContext,App_Id,App_Key)
-            FynoUser.setMiIntegration(Integration_Id)
-            com.xiaomi.mipush.sdk.Logger.setLogger(FynoCore.appContext, object : LoggerInterface {
+            FynoUser.setFynoIntegration(Integration_Id)
+            com.xiaomi.mipush.sdk.Logger.setLogger(FynoCore.appContext, object: LoggerInterface {
                 override fun setTag(tag: String?) {
                     Logger.i(MiPushHelper.TAG, "XMPushTag : $tag")
                 }
@@ -133,31 +131,35 @@ class FynoPush {
         return brands.contains(model)
     }
 
-    fun registerPush(App_Id: String? = "", App_Key: String? = "", pushRegion: PushRegion? = PushRegion.INDIA, Fyno_Integration_Id: String = "") {
+    fun registerPush(appId: String? = "", appKey: String? = "", pushRegion: PushRegion? = PushRegion.INDIA) {
+        if(!FynoContextCreator.isInitialized()){
+            Logger.w(
+                "FynoSDK",
+                "registerPush: Fyno SDK is not initialized",
+            )
+            return;
+        }
+        val fynoIntegrationId = FynoUser.getFynoIntegration();
+        if(fynoIntegrationId.isEmpty()){
+            Logger.w(
+                "FynoSDK",
+                "registerPush: FCM Integration ID is required, received null",
+            )
+            return;
+        }
         if (identifyOem(Build.MANUFACTURER.lowercase())) {
-            if (!App_Id.isNullOrEmpty() && !App_Key.isNullOrEmpty() && !Fyno_Integration_Id.isNullOrEmpty()) {
+            if (!appId.isNullOrEmpty() && !appKey.isNullOrEmpty()) {
                 if (pushRegion != null) {
                     setMiRegion(pushRegion)
                 } else {
                     setMiRegion(PushRegion.INDIA)
                 }
-                registerMiPush(App_Id, App_Key, Fyno_Integration_Id)
+                registerMiPush(appId, appKey, fynoIntegrationId)
             } else {
-                if (!Fyno_Integration_Id.isNullOrEmpty()) {
-                    registerFCM(Fyno_Integration_Id)
-                } else {
-                    Logger.w(
-                        "FynoSDK",
-                        "registerPush: FCM Integration ID is required, received null",
-                    )
-                }
+                registerFCM(fynoIntegrationId)
             };
         } else {
-            if (!Fyno_Integration_Id.isNullOrEmpty()) {
-                registerFCM(Fyno_Integration_Id)
-            } else {
-                Logger.i("FynoSDK", "registerPush: FCM Integration ID is required, received null",)
-            }
+            registerFCM(fynoIntegrationId)
         }
     }
 }

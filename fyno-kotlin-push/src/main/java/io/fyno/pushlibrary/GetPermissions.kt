@@ -22,25 +22,11 @@ internal class GetPermissions : AppCompatActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        permissionResultManager(isGranted)
-    }
-
-    public fun permissionResultManager(result: Boolean) {
-        if (result) {
-            FynoUser.getFcmToken()?.let {
-                FynoUser.setFcmToken(it)
-            }
-            FynoUser.getMiToken()?.let {
-                FynoUser.setMiToken(it)
-            }
+        if (isGranted) {
             Log.d("PermissionDialog", "Notifications permission granted")
-//            Toast.makeText(this, "Notifications permission granted", Toast.LENGTH_SHORT)
-//                .show()
+            updateUserPermissionStatus(true)
         } else {
             Log.d("PermissionDialog", "Can't post notifications without POST_NOTIFICATIONS permission")
-//            Toast.makeText(
-//                this, "Can't post notifications without POST_NOTIFICATIONS permission",
-//                Toast.LENGTH_LONG).show()
         }
     }
 
@@ -51,6 +37,17 @@ internal class GetPermissions : AppCompatActivity() {
             ) {
             } else {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun updateUserPermissionStatus(isGranted: Boolean) {
+        if (isGranted) {
+            FynoUser.getFcmToken()?.let {
+                FynoUser.setFcmToken(it)
+            }
+            FynoUser.getMiToken()?.let {
+                FynoUser.setMiToken(it)
             }
         }
     }

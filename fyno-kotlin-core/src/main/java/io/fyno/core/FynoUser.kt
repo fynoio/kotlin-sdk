@@ -199,4 +199,12 @@ object FynoUser {
     fun getUserName(): String {
         return FynoContextCreator.sqlDataHelper.getConfigByKey("fyno_user_name").value ?: ""
     }
+
+    fun setJWTToken(jwtToken:String){
+        FynoContextCreator.sqlDataHelper.insertConfigByKey(Config(key = "jwt_token", value = jwtToken))
+    }
+
+    fun getJWTToken(): String{
+        return FynoContextCreator.sqlDataHelper.getConfigByKey("jwt_token").value ?: ""
+    }
 }
