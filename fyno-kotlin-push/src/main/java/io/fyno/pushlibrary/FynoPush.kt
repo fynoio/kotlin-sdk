@@ -22,9 +22,10 @@ import io.fyno.pushlibrary.mipush.MiPushHelper
 import io.fyno.pushlibrary.models.PushRegion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.Delayed
 
 class FynoPush {
-    fun showPermissionDialog(){
+    fun showPermissionDialog(delay: Long = 0){
         Log.i(FynoCore.TAG, "showPermissionDialog: Im triggered")
         if(Build.VERSION.SDK_INT <= 24)
             return
@@ -37,7 +38,7 @@ class FynoPush {
             else
                 FynoUser.getFcmToken()?.let { FynoUser.setFcmToken(it) }
                 Logger.i(FcmHandlerService.TAG, "Notification Permissions are allowed")
-        },5000);
+        },delay);
     }
 
 

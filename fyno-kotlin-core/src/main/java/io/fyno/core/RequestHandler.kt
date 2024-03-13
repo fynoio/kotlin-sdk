@@ -3,7 +3,6 @@ package io.fyno.core
 import android.annotation.SuppressLint
 import android.content.Context
 import android.database.Cursor
-import android.util.Log
 import io.fyno.core.FynoCore.Companion.TAG
 import io.fyno.core.utils.FynoContextCreator
 import io.fyno.core.utils.Logger
@@ -18,12 +17,17 @@ import kotlin.math.pow
 import io.fyno.core.helpers.SQLDataHelper
 import java.io.BufferedReader
 
+
 object RequestHandler {
     private const val TIMEOUT = 6000
     private const val MAX_BACKOFF_DELAY: Long = 60000
     private const val MAX_RETRIES = 3
     private lateinit var sqlDataHelper: SQLDataHelper
 
+    interface NetworkCallback {
+        fun onSuccess(response: String)
+        fun onError(error: String)
+    }
     data class Request(val url: String?, val postData: JSONObject?, val method: String = "POST")
 
     private fun isCallBackRequest(url:String?):Boolean{
@@ -54,6 +58,36 @@ object RequestHandler {
                 }
             }
         } catch (e: Exception) {
+            Logger.w(TAG, "requestPOST: Failed to send request - ${e.message}")
+        }
+    }
+
+    @Throws(Exception::class)
+    suspend fun requestPOSTWithCallbacks(
+        r_url: String?,
+        postDataParams: JSONObject?,
+        method: String = "POST",
+        context: Context? = null,
+        callback: NetworkCallback
+    ) {
+        try {
+            val request = Request(r_url, postDataParams, method)
+            if (FynoContextCreator.isInitialized()) {
+                if(isCallBackRequest(r_url)){
+                    saveCBRequestToDb(request, context)
+                    processCBRequests(context,"requestPOST")
+                } else{
+                    saveRequestToDb(request)
+                    processDbRequests("requestPOST")
+                }
+            } else {
+                if(isCallBackRequest(r_url)) {
+                    saveCBRequestToDb(request, context)
+                    processCBRequests(context,"requestPOST")
+                }
+            }
+        } catch (e: Exception) {
+            callback.onError(e.message.toString())
             Logger.w(TAG, "requestPOST: Failed to send request - ${e.message}")
         }
     }
@@ -169,6 +203,7 @@ object RequestHandler {
                     return
                 }
                 FynoContextCreator.sqlDataHelper.deleteRequestByID(id, "requests")
+                throw Exception("Request failed with response code: $responseCode")
             }
 
             else -> {

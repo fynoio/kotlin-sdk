@@ -78,9 +78,10 @@ class FynoCore {
                 return
             }
             val oldDistinctId = FynoUser.getIdentity()
-            if (oldDistinctId == uniqueId) return
-
-//            LoggerHelper().logDebug(TAG, "identify: $uniqueId, $oldDistinctId")
+            if (oldDistinctId == uniqueId) {
+                updateName(name)
+                return
+            }
             if (update) {
                 runBlocking {
                     CoroutineScope(Dispatchers.IO).launch {
@@ -110,7 +111,20 @@ class FynoCore {
                     }
                 }
             }
-            FynoUser.identify(uniqueId)
+        }
+        private fun updateName(name: String?) {
+            if(name.isNullOrEmpty()){
+                return
+            }
+            val upsertEndpoint = FynoUtils().getEndpoint(
+                "upsert_profile",
+                FynoUser.getWorkspace(),
+                profile = FynoUser.getIdentity(),
+                version = getString("VERSION")
+            )
+            runBlocking(Dispatchers.IO) {
+                RequestHandler.requestPOST(upsertEndpoint, getParamsObj(FynoUser.getIdentity(), name), "PUT")
+            }
         }
 
         private fun getParamsObj(uniqueId: String, name: String? = null): JSONObject {
@@ -244,30 +258,6 @@ class FynoCore {
                 }
             }
         }
-//        fun mergeProfile(context: Context, oldDistinctId: String, newDistinctId: String) {
-//            if (!FynoContextCreator.isInitialized()){
-//                FynoContextCreator.context = context
-//            }
-//            if (oldDistinctId.isBlank() or newDistinctId.isBlank()) {
-//                Logger.w(TAG, "mergeProfile: Failed as Both old id and new id are required to merge profile")
-//                return
-//            }
-//
-//            if(oldDistinctId == newDistinctId) {
-//                Logger.w(TAG, "mergeProfile: No need to merge as both old id and new id are same")
-//                return
-//            }
-//
-//            CoroutineScope(Dispatchers.IO).launch  {
-//                try {
-//                    val mergeProfileEndpoint = FynoUtils().getEndpoint("merge_profile", FynoUser.getWorkspace(), profile = oldDistinctId, newId = newDistinctId, version = getString("VERSION"))
-//                    RequestHandler.requestPOST(mergeProfileEndpoint,null, "PATCH")
-//                    identify(newDistinctId, "", false)
-//                } catch (e: Exception) {
-//                    Logger.w(TAG, "mergeProfile: Failed with exception ${e.message}")
-//                }
-//            }
-//        }
 
         private fun setString(key: String, value: String) {
             fynoPreferences.edit().putString(key, value).apply()

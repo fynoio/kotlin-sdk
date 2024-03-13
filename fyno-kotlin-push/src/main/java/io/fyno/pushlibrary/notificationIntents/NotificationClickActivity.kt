@@ -21,13 +21,14 @@ open class NotificationClickActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
             Logger.d("NotificationClick", "onCreate: ")
+            super.onCreate(savedInstanceState)
             val launchintent = handleNotificationClick()
-            launchintent.action = ACTION_NOTIFICATION_CLICK
+//            launchintent.action = ACTION_NOTIFICATION_CLICK
             launchintent.putExtra("io.fyno.pushlibrary.notification.action", "clicked")
             launchintent.putExtra("io.fyno.pushlibrary.notification.intent", intent.toString())
             intent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
                 ?.let { launchintent.putExtra("io.fyno.pushlibrary.notification.payload", it) }
-            this.applicationContext.startActivity(launchintent).runCatching {
+            startActivity(launchintent).runCatching {
             }
             val cintent = Intent()
             cintent.action = ACTION_NOTIFICATION_CLICK
@@ -37,7 +38,7 @@ open class NotificationClickActivity : Activity() {
             cintent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
                 ?.let { launchintent.putExtra("io.fyno.pushlibrary.notification.payload", it) }
             sendBroadcast(cintent)
-            super.onCreate(savedInstanceState)
+//            FynoPush.PushObject.handleNotificationClick(cintent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras"))
             finish()
         } catch (e:Exception) {
             Logger.e("${FynoCore.TAG}-NotificationClick",e.message.toString(),e)
@@ -51,10 +52,8 @@ open class NotificationClickActivity : Activity() {
         Logger.d("${FynoCore.TAG}-NotificationClicked", "onReceive: $callback")
         Logger.d("${FynoCore.TAG}-NotificationClick", "onStart: Click Activity Started")
         if (callback != null) {
-            runBlocking {
-                CoroutineScope(Dispatchers.IO).launch {
+            runBlocking(Dispatchers.IO) {
                     FynoCallback().updateStatus(applicationContext, callback, MessageStatus.CLICKED)
-                }
             }
         }
         if(action!=null) {

@@ -6,6 +6,7 @@ import android.icu.lang.UCharacter.GraphemeClusterBreak.T
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -22,13 +23,10 @@ internal class GetPermissions : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            Toast.makeText(this, "Notifications permission granted", Toast.LENGTH_SHORT)
-                .show()
+            Log.d("PermissionDialog", "Notifications permission granted")
             updateUserPermissionStatus(true)
         } else {
-            Toast.makeText(
-                this, "Can't post notifications without POST_NOTIFICATIONS permission",
-                Toast.LENGTH_LONG).show()
+            Log.d("PermissionDialog", "Can't post notifications without POST_NOTIFICATIONS permission")
         }
     }
 
