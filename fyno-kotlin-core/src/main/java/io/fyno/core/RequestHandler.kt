@@ -15,6 +15,7 @@ import java.net.URL
 import java.util.Date
 import kotlin.math.pow
 import io.fyno.core.helpers.SQLDataHelper
+import java.io.BufferedReader
 
 
 object RequestHandler {
@@ -124,6 +125,7 @@ object RequestHandler {
                 return true // Request successful, exit the retry loop
             } catch (e: Exception) {
                 Logger.d(TAG, "Request failed: ${e.message}")
+                Logger.e(TAG,"Req failed",e)
                 // Implement a backoff strategy here (e.g., exponential backoff)
                 val delayMillis = calculateDelay(retries)
                 delay(delayMillis)
@@ -184,6 +186,17 @@ object RequestHandler {
             }
 
             in 400..499 -> {
+                val inputStream = conn.errorStream
+                val response = inputStream.bufferedReader().use(BufferedReader::readText)
+                val jsonResponse = JSONObject(response)
+                if(responseCode == 401) {
+                    val message = jsonResponse.getString("error")
+                    if (message == "jwt_expired") {
+                        JWTRequestHandler().fetchAndSetJWTToken(FynoUser.getIdentity())
+                        doRequest(request)
+                        return
+                    }
+                }
                 Logger.i(TAG, "Request failed with response code: $responseCode")
                 if (isCallBackRequest(request.url)) {
                     deleteCBRequestFromDb(id, context)
@@ -204,7 +217,9 @@ object RequestHandler {
     private fun HttpURLConnection.setRequestProperties() {
         this.setRequestProperty("Content-Type", "application/json")
         if (FynoContextCreator.isInitialized()) {
-            this.setRequestProperty("Authorization", "Bearer ${FynoUser.getApi()}")
+            this.setRequestProperty("x-fn-app-id", FynoContextCreator.context.packageName)
+            this.setRequestProperty("integration", FynoUser.getFynoIntegration())
+            this.setRequestProperty("verify_token",FynoUser.getJWTToken())
         }
     }
 
