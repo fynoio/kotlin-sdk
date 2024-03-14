@@ -190,7 +190,7 @@ object RequestHandler {
                 val response = inputStream.bufferedReader().use(BufferedReader::readText)
                 val jsonResponse = JSONObject(response)
                 if(responseCode == 401) {
-                    val message = jsonResponse.getString("error")
+                    val message = jsonResponse.getString("_message")
                     if (message == "jwt_expired") {
                         JWTRequestHandler().fetchAndSetJWTToken(FynoUser.getIdentity())
                         doRequest(request)

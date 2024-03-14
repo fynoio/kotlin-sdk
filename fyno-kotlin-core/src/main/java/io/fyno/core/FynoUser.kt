@@ -29,7 +29,7 @@ object FynoUser {
                             put("channel", JSONObject().apply {
                                 put("push", JSONArray(listOf(JSONObject().apply {
                                     put("token", "$tokenType:$token")
-                                    put("integration_id", getIntegrationId(tokenType))
+                                    put("integration_id", getFynoIntegration())
                                     put("status", notificationStatus)
                                 })))
                             })
