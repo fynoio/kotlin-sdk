@@ -13,6 +13,7 @@ import io.fyno.pushlibrary.models.PushRegion
 //import io.sentry.protocol.User
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -45,13 +46,12 @@ public object FynoSdk {
         pushRegion: PushRegion? = PushRegion.INDIA,
     ) {
         CoroutineScope(Dispatchers.IO).launch {
-            Handler(Looper.getMainLooper()).postDelayed({
-                FynoPush().registerPush(
-                    xiaomiApplicationId,
-                    xiaomiApplicationKey,
-                    pushRegion
-                )
-            }, 5000);
+            delay(5000)
+            FynoPush().registerPush(
+                xiaomiApplicationId,
+                xiaomiApplicationKey,
+                pushRegion
+            )
         }
     }
 
