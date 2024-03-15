@@ -111,6 +111,7 @@ class FynoCore {
                     }
                 }
             }
+            FynoUser.identify(uniqueId)
         }
         private fun updateName(name: String?) {
             if(name.isNullOrEmpty()){
@@ -196,7 +197,7 @@ class FynoCore {
                         version = getString("VERSION")
                     )
                     RequestHandler.requestPOST(deleteEndpoint, deleteJson, "POST")
-
+                    JWTRequestHandler().fetchAndSetJWTToken(uuid)
                     val createProfileEndpoint = FynoUtils().getEndpoint(
                         "create_profile",
                         FynoUser.getWorkspace(),

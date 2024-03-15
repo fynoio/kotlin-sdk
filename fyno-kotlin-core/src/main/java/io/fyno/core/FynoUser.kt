@@ -29,7 +29,7 @@ object FynoUser {
                             put("channel", JSONObject().apply {
                                 put("push", JSONArray(listOf(JSONObject().apply {
                                     put("token", "$tokenType:$token")
-                                    put("integration_id", getIntegrationId(tokenType))
+                                    put("integration_id", getFynoIntegration())
                                     put("status", notificationStatus)
                                 })))
                             })
@@ -45,6 +45,44 @@ object FynoUser {
                         Logger.d(
                             TAG,
                             "Exception in set${tokenType.capitalize()}Token: ${e.message}"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateInapp(token: String, integrationId: String){
+        if (getWorkspace().isNotEmpty()) {
+            runBlocking {
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val endpoint = FynoUtils().getEndpoint(
+                            "update_channel",
+                            getWorkspace(),
+                            profile = token,
+                            version = FynoCore.getString("VERSION")
+                        )
+                        val requestBody = JSONObject().apply {
+                            put("channel", JSONObject().apply {
+                                put("inapp", JSONArray(listOf(JSONObject().apply {
+                                    put("token", token)
+                                    put("integration_id", integrationId)
+                                    put("status", 1)
+                                })))
+                            })
+                        }
+                        RequestHandler.requestPOST(endpoint, requestBody, "PATCH")
+                        FynoContextCreator.sqlDataHelper.insertConfigByKey(
+                            Config(
+                                key = "fyno_inapp_token",
+                                value = token
+                            )
+                        )
+                    } catch (e: Exception) {
+                        Logger.d(
+                            TAG,
+                            "Exception in set Inapp Token: ${e.message}"
                         )
                     }
                 }
@@ -206,5 +244,13 @@ object FynoUser {
 
     fun getJWTToken(): String{
         return FynoContextCreator.sqlDataHelper.getConfigByKey("jwt_token").value ?: ""
+    }
+
+    fun setInapp(distinct_id: String, integrationId: String){
+        updateInapp(distinct_id, integrationId);
+    }
+
+    fun getInapp(): String {
+        return FynoContextCreator.sqlDataHelper.getConfigByKey("fyno_inapp_token").value ?: ""
     }
 }
