@@ -79,13 +79,15 @@ class FynoCore {
             }
             val oldDistinctId = FynoUser.getIdentity()
             if (oldDistinctId == uniqueId) {
-                updateName(name)
                 return
             }
             if (update) {
                 runBlocking {
                     CoroutineScope(Dispatchers.IO).launch {
                         if (oldDistinctId.isNotBlank()) {
+                            if (FynoUser.getJWTToken().isEmpty()) {
+                                JWTRequestHandler().fetchAndSetJWTToken(oldDistinctId)
+                            }
                             val mergeEndpoint = FynoUtils().getEndpoint(
                                 "merge_profile",
                                 FynoUser.getWorkspace(),
@@ -95,7 +97,11 @@ class FynoCore {
                             )
                             RequestHandler.requestPOST(mergeEndpoint, null, "PATCH")
                             JWTRequestHandler().fetchAndSetJWTToken(uniqueId)
+                            if (name?.isNotEmpty() == true) updateName(name)
                         } else {
+                            if (FynoUser.getJWTToken().isEmpty()) {
+                                JWTRequestHandler().fetchAndSetJWTToken(uniqueId)
+                            }
                             val upsertEndpoint = FynoUtils().getEndpoint(
                                 "upsert_profile",
                                 FynoUser.getWorkspace(),
