@@ -25,7 +25,7 @@ class FynoCore {
         lateinit var appContext: Context
         private lateinit var fynoPreferences: SharedPreferences
 
-        fun initialize(context: Context, wsid: String, integration: String, version: String = "live") {
+        fun initialize(context: Context, wsid: String, integration: String, version: String = "live", userId: String? = null) {
             require(wsid.isNotEmpty()) { "Workspace Id is empty" }
 
             val sqlDataHelper = SQLDataHelper(context)
@@ -45,7 +45,7 @@ class FynoCore {
             FynoUser.setFynoIntegration(integration)
             FynoUser.setWorkspace(wsid)
 
-            if (FynoUser.getIdentity().isEmpty()) {
+            if (FynoUser.getIdentity().isEmpty() && userId.isNullOrBlank()) {
                 val uuid = UUID.randomUUID().toString()
                 try {
                     runBlocking {
@@ -68,6 +68,31 @@ class FynoCore {
                     }
                 } catch (e: Exception) {
                     Logger.e(TAG, "In Exception initialize: ${e.message}", e)
+                }
+            } else {
+                userId?.let {
+                    try {
+                        runBlocking {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                JWTRequestHandler().fetchAndSetJWTToken(userId)
+                                val endpoint = FynoUtils().getEndpoint(
+                                    "create_profile",
+                                    FynoUser.getWorkspace(),
+                                    profile = userId,
+                                    version = getString("VERSION")
+                                )
+                                RequestHandler.requestPOST(
+                                    endpoint,
+                                    JSONObject().put("distinct_id", userId),
+                                    "POST"
+                                )
+                                identify(userId, update = false)
+                                setFlag("isDirty", true)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Logger.e(TAG, "In Exception initialize: ${e.message}", e)
+                    }
                 }
             }
         }

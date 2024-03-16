@@ -189,8 +189,8 @@ object RequestHandler {
                 val inputStream = conn.errorStream
                 val response = inputStream.bufferedReader().use(BufferedReader::readText)
                 val jsonResponse = JSONObject(response)
+                val message = jsonResponse.getString("_message")
                 if(responseCode == 401) {
-                    val message = jsonResponse.getString("_message")
                     if (message == "jwt_expired") {
                         JWTRequestHandler().fetchAndSetJWTToken(FynoUser.getIdentity())
                         doRequest(request)
@@ -203,7 +203,7 @@ object RequestHandler {
                     return
                 }
                 FynoContextCreator.sqlDataHelper.deleteRequestByID(id, "requests")
-                throw Exception("Request failed with response code: $responseCode")
+                Logger.w(TAG, "Request failed: $message")
             }
 
             else -> {
