@@ -28,10 +28,7 @@ public object FynoSdk {
     ) {
         runBlocking {
             CoroutineScope(Dispatchers.IO).launch {
-                FynoCore.initialize(context, workspaceId, integrationId, version)
-                if (!userId.isNullOrBlank()) {
-                    FynoCore.identify(uniqueId = userId, update = true)
-                }
+                FynoCore.initialize(context, workspaceId, integrationId, version, userId)
             }
         }
     }
