@@ -13,39 +13,48 @@ import org.json.JSONObject
 object FynoUser {
     private const val TAG = "FynoUser"
     private fun updatePush(tokenType: String, token: String) {
+        val permissions = if (FynoCore.areNotificationPermissionsEnabled()) 1 else 0
         if (getIdentity().isNotEmpty() && getWorkspace().isNotEmpty()) {
-            runBlocking {
-                CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        val endpoint = FynoUtils().getEndpoint(
-                            "update_channel",
-                            getWorkspace(),
-                            profile = getIdentity(),
-                            version = FynoCore.getString("VERSION")
-                        )
-                        val notificationStatus =
-                            if (FynoCore.areNotificationPermissionsEnabled()) 1 else 0
-                        val requestBody = JSONObject().apply {
-                            put("channel", JSONObject().apply {
-                                put("push", JSONArray(listOf(JSONObject().apply {
-                                    put("token", "$tokenType:$token")
-                                    put("integration_id", getFynoIntegration())
-                                    put("status", notificationStatus)
-                                })))
-                            })
-                        }
-                        RequestHandler.requestPOST(endpoint, requestBody, "PATCH")
-                        FynoContextCreator.sqlDataHelper.insertConfigByKey(
-                            Config(
-                                key = "fyno_${tokenType}_token",
-                                value = token
+            ((tokenType == FynoContextCreator.sqlDataHelper.getConfigByKey("fyno_${tokenType}_token").value) && (permissions.toString() == FynoContextCreator.sqlDataHelper.getConfigByKey(
+                "fyno_push_permission"
+            ).value)).let {
+                runBlocking {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val endpoint = FynoUtils().getEndpoint(
+                                "update_channel",
+                                getWorkspace(),
+                                profile = getIdentity(),
+                                version = FynoCore.getString("VERSION")
                             )
-                        )
-                    } catch (e: Exception) {
-                        Logger.d(
-                            TAG,
-                            "Exception in set${tokenType.capitalize()}Token: ${e.message}"
-                        )
+                            val requestBody = JSONObject().apply {
+                                put("channel", JSONObject().apply {
+                                    put("push", JSONArray(listOf(JSONObject().apply {
+                                        put("token", "$tokenType:$token")
+                                        put("integration_id", getFynoIntegration())
+                                        put("status", permissions)
+                                    })))
+                                })
+                            }
+                            RequestHandler.requestPOST(endpoint, requestBody, "PATCH")
+                            FynoContextCreator.sqlDataHelper.insertConfigByKey(
+                                Config(
+                                    key = "fyno_${tokenType}_token",
+                                    value = token
+                                )
+                            )
+                            FynoContextCreator.sqlDataHelper.insertConfigByKey(
+                                Config(
+                                    key = "fyno_push_permission",
+                                    value = permissions.toString()
+                                )
+                            )
+                        } catch (e: Exception) {
+                            Logger.d(
+                                TAG,
+                                "Exception in set${tokenType.capitalize()}Token: ${e.message}"
+                            )
+                        }
                     }
                 }
             }

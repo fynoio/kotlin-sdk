@@ -67,6 +67,7 @@ class NotificationActionClickActivity : AppCompatActivity() {
             newIntent = when {
                 it.startsWith("http://") or it.startsWith("https://") -> Intent(Intent.ACTION_VIEW, Uri.parse(it))
                 it.startsWith("www.") -> Intent(Intent.ACTION_VIEW, Uri.parse("https://$it"))
+                it.contains("://") -> Intent(Intent.ACTION_VIEW, Uri.parse(it))
                 else -> {
                     try {
                         Intent(this, Class.forName(it))

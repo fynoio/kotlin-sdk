@@ -28,8 +28,7 @@ open class NotificationClickActivity : Activity() {
             launchintent.putExtra("io.fyno.pushlibrary.notification.intent", intent.toString())
             intent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
                 ?.let { launchintent.putExtra("io.fyno.pushlibrary.notification.payload", it) }
-            startActivity(launchintent).runCatching {
-            }
+            startActivity(launchintent)
             val cintent = Intent()
             cintent.action = ACTION_NOTIFICATION_CLICK
             cintent.putExtra("io.fyno.pushlibrary.notification.action", "clicked")
@@ -63,6 +62,10 @@ open class NotificationClickActivity : Activity() {
                 }
             } else if(action.startsWith("www.")){
                 intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://$action")).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY
+                }
+            } else if(action.contains("://")){
+                intent = Intent(Intent.ACTION_VIEW, Uri.parse(action)).apply {
                     flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY
                 }
             } else {
