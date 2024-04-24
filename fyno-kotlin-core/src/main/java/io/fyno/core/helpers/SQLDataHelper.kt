@@ -8,12 +8,6 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import io.fyno.core.RequestHandler
 import io.fyno.core.utils.Logger
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
-
 
 class Config(
     var key: String? = null,
@@ -59,6 +53,11 @@ class SQLDataHelper(context: Context?) :
         } catch (e: Exception) {
             Logger.d("db", "onCreate - $e")
         }
+    }
+
+    override fun close() {
+        db.close()
+        super.close()
     }
 
     fun updateStatusAndLastProcessedTime(id:Int?, tableName: String,status:String){
@@ -144,25 +143,11 @@ class SQLDataHelper(context: Context?) :
         }
     }
 
-    fun getNextRequest(): Cursor {
+    fun getNextRequest(tableName: String): Cursor {
         return db.query(
-            REQ_TABLE_NAME,
+            tableName,
             null,
-            "$COLUMN_STATUS = \"not_processed\"",
-            null,
-            null,
-            null,
-            "$COLUMN_ID ASC",
-            "1"
-        )
-    }
-
-    @SuppressLint("Range")
-    fun getNextCBRequest(): Cursor {
-        return db.query(
-            CB_TABLE_NAME,
-            null,
-            "$COLUMN_STATUS = \"not_processed\"",
+            "$COLUMN_STATUS = \'not_processed\'",
             null,
             null,
             null,
@@ -191,9 +176,9 @@ class SQLDataHelper(context: Context?) :
                     }
                 }
             } else {
+                c.close()
                 insert_config(table_model_obj)
             }
-            c.close()
         } catch (e: Exception) {
             Logger.d("db", "insert_configByKey - $e")
         } finally {
@@ -251,4 +236,3 @@ class SQLDataHelper(context: Context?) :
         const val COLUMN_STATUS = "status"
     }
 }
-

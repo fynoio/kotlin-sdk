@@ -51,7 +51,7 @@ class FynoPush {
                     return@runBlocking
                 }
                 FynoUser.setFynoIntegration(FCM_Integration_Id)
-                FirebaseApp.initializeApp(FynoContextCreator.context.applicationContext)
+                FirebaseApp.initializeApp(FynoContextCreator.getContext()!!.applicationContext)
                 saveFcmToken()
             }
         } catch (e:Exception) {

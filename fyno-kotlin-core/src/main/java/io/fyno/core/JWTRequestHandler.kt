@@ -6,40 +6,36 @@ import org.json.JSONObject
 import java.io.BufferedReader
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.Date
 
 class JWTRequestHandler {
-    internal fun fetchAndSetJWTToken(distinctID: String) {
-        val url = URL(FynoConstants.PROD_ENDPOINT + "/" + FynoUser.getWorkspace() + "/" + distinctID + "/token")
-        URL(url.protocol, url.host, 3000, url.file)
-        val conn: HttpURLConnection = url.openConnection() as HttpURLConnection
-        conn.requestMethod = "GET"
+    internal fun fetchAndSetJWTToken(distinctID: String): String? {
+        try {
+            val urlString =
+                "${FynoConstants.PROD_ENDPOINT}/${FynoUser.getWorkspace()}/$distinctID/token"
+            val url = URL(urlString)
+            val conn = url.openConnection() as HttpURLConnection
 
-        val responseCode: Int = conn.responseCode
-
-        Logger.d(
-            "fetchAndSetJWTToken",
-            "fetchAndSetJWTToken method = ${conn.requestMethod} url = $url: ${conn.responseMessage} || time: ${Date().time}"
-        )
-
-        when (responseCode) {
-            in 200..299 -> {
-                Logger.i("RequestPost", "requestPOST: ${conn.responseMessage}")
-                val inputStream = conn.inputStream
-                val response = inputStream.bufferedReader().use(BufferedReader::readText)
+            conn.requestMethod = "GET"
+            val responseCode = conn.responseCode
+            if (responseCode in 200..299) {
+                val response =
+                    conn.inputStream.bufferedReader().use(BufferedReader::readText)
                 val jsonResponse = JSONObject(response)
-                val token = jsonResponse.getString("token")
-                FynoUser.setJWTToken(token)
+                conn.disconnect()
+                return jsonResponse.getString("token").also {
+                    FynoUser.setJWTToken(it)
+                }
+            } else {
+                Logger.d(
+                    "JWTRequestHandler",
+                    "Request failed with response code: $responseCode for user $distinctID"
+                )
+                conn.disconnect()
+                return null
             }
-
-            in 400..499 -> {
-                Logger.i(FynoCore.TAG, "Request failed with response code: $responseCode")
-            }
-
-            else -> {
-                Logger.i(FynoCore.TAG, "Request failed with response code: $responseCode")
-            }
+        } catch (e: Exception) {
+            Logger.w("JWTRequestHandler", "Error fetching JWT token", e)
+            return null
         }
-        conn.disconnect()
     }
 }

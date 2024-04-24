@@ -8,8 +8,10 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 class ConnectionStateMonitor : NetworkCallback() {
     private var isNetworkCallbackRegistered = false
@@ -34,9 +36,9 @@ class ConnectionStateMonitor : NetworkCallback() {
 
     override fun onAvailable(network: Network) {
         runBlocking {
-            CoroutineScope(Dispatchers.IO).launch {
-                RequestHandler.processDbRequests()
+            withContext(Dispatchers.IO) {
                 RequestHandler.processCBRequests(cbContext)
+                async { RequestHandler.processDbRequests() }.await()
             }
         }
     }

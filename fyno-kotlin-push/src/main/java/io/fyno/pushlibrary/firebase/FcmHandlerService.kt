@@ -5,7 +5,7 @@ import com.google.firebase.messaging.RemoteMessage
 import io.fyno.callback.FynoCallback
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.FynoUser
-import io.fyno.core.utils.FynoContextCreator
+import FynoContextCreator
 import io.fyno.core.utils.Logger
 import io.fyno.pushlibrary.FynoPush
 import io.fyno.pushlibrary.helper.NotificationHelper.isFynoMessage
@@ -31,8 +31,10 @@ open class FcmHandlerService : FirebaseMessagingService() {
             Logger.d(TAG, "onMessageReceived: ${message.rawData}")
             when {
                 message.isFynoMessage() -> {
-                    val context = if(FynoContextCreator.isInitialized())FynoContextCreator.context else this
-                    renderFCMMessage(context, message.rawMessage())
+                    val context = if(FynoContextCreator.isInitialized())FynoContextCreator.getContext() else this.applicationContext
+                    if (context != null) {
+                        renderFCMMessage(context, message.rawMessage())
+                    }
                 }
                 else -> {
                     val callback = message.data["callback"]

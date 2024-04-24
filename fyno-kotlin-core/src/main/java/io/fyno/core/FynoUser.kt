@@ -10,14 +10,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
+
 object FynoUser {
     private const val TAG = "FynoUser"
     private fun updatePush(tokenType: String, token: String) {
         val permissions = if (FynoCore.areNotificationPermissionsEnabled()) 1 else 0
         if (getIdentity().isNotEmpty() && getWorkspace().isNotEmpty()) {
-            ((tokenType == FynoContextCreator.sqlDataHelper.getConfigByKey("fyno_${tokenType}_token").value) && (permissions.toString() == FynoContextCreator.sqlDataHelper.getConfigByKey(
+            if((permissions.toString() != FynoContextCreator.sqlDataHelper.getConfigByKey(
                 "fyno_push_permission"
-            ).value)).let {
+            ).value) || (getIdentity() != FynoContextCreator.sqlDataHelper.getConfigByKey(
+                    "fyno_push_distinct_id"
+                ).value)
+            ){
                 runBlocking {
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
@@ -49,10 +53,16 @@ object FynoUser {
                                     value = permissions.toString()
                                 )
                             )
+                            FynoContextCreator.sqlDataHelper.insertConfigByKey(
+                                Config(
+                                    key = "fyno_push_distinct_id",
+                                    value = getIdentity()
+                                )
+                            )
                         } catch (e: Exception) {
                             Logger.d(
                                 TAG,
-                                "Exception in set${tokenType.capitalize()}Token: ${e.message}"
+                                "Exception in set${tokenType}Token: ${e.message}"
                             )
                         }
                     }
@@ -135,10 +145,10 @@ object FynoUser {
     }
 
     private fun getIntegrationId(tokenType: String): String {
-        when (tokenType) {
-            "fcm_token" -> return getFcmIntegration()
-            "mi_token" -> return getMiIntegration()
-            else -> return ""
+        return when (tokenType) {
+            "fcm_token" -> getFcmIntegration()
+            "mi_token" -> getMiIntegration()
+            else -> ""
         }
     }
 
