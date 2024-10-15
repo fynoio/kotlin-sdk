@@ -272,25 +272,26 @@ intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString
             var defaultSmallIcon = 0
             try {
                 defaultSmallIcon = when {
-                    basicNotification.smallIconDrawable.isNullOrBlank() -> {
-                        context.packageManager.getApplicationInfo(
+                    !basicNotification.smallIconDrawable.isNullOrBlank() -> {
+                        // Icon from template (if provided)
+                        context.resources.getIdentifier(
+                            basicNotification.smallIconDrawable,
+                            "drawable",
+                            context.packageName
+                        )
+                    }
+                    else -> {
+                        // Get default notification icon from manifest or fallback to app icon
+                        val appInfo = context.packageManager.getApplicationInfo(
                             context.packageName,
                             PackageManager.GET_META_DATA
                         )
-                        val iconName = context.packageManager.getApplicationInfo(
-                            context.packageName,
-                            PackageManager.GET_META_DATA
-                        ).metaData?.getString("com.google.firebase.messaging.default_notification_icon")
-                            ?: "ic_notification"
-                        context.applicationInfo.icon
+                        appInfo.metaData?.getInt("com.google.firebase.messaging.default_notification_icon")
+                            ?: context.applicationInfo.icon
                     }
-
-                    else -> context.resources.getIdentifier(
-                        basicNotification.smallIconDrawable,
-                        "drawable",
-                        context.packageName
-                    )
                 }
+
+                // Ensure a valid icon is set if not available in template/manifest
                 if (defaultSmallIcon == 0) {
                     defaultSmallIcon = context.applicationInfo.icon
                 }

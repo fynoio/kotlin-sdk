@@ -5,7 +5,7 @@ import com.google.firebase.messaging.RemoteMessage
 import io.fyno.callback.FynoCallback
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.FynoUser
-import FynoContextCreator
+import io.fyno.core.utils.FynoContextCreator
 import io.fyno.core.utils.Logger
 import io.fyno.pushlibrary.FynoPush
 import io.fyno.pushlibrary.helper.NotificationHelper.isFynoMessage
@@ -13,10 +13,16 @@ import io.fyno.pushlibrary.helper.NotificationHelper.rawMessage
 import io.fyno.pushlibrary.helper.NotificationHelper.renderFCMMessage
 import java.lang.Exception
 
+interface FynoPNCallback {
+        fun onNotificationReceived(message: RemoteMessage)
+        fun onNotificationClicked(message: RemoteMessage)
+        fun onNotificationDismissed(message: RemoteMessage)
+}
 open class FcmHandlerService : FirebaseMessagingService() {
+    private var callback: FynoPNCallback? = null
 
-    open fun onNotificationReceived(notification: RemoteMessage) {
-        // Override Method
+    fun setCallback(param: FynoPNCallback) {
+        callback = param
     }
 
     override fun onNewToken(token: String) {
@@ -44,7 +50,7 @@ open class FcmHandlerService : FirebaseMessagingService() {
                     super.onMessageReceived(message)
                 }
             }
-            onNotificationReceived(message)
+            callback?.onNotificationReceived(message)
         } catch (e:Exception) {
             Logger.e(TAG, e.message.toString(),e)
         }

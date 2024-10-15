@@ -12,7 +12,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import io.fyno.core.FynoUser
 
-internal class GetPermissions : AppCompatActivity() {
+class GetPermissions : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         askNotificationPermission()
         super.onCreate(savedInstanceState)
