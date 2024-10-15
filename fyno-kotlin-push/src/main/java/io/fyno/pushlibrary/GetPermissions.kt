@@ -15,7 +15,12 @@ import io.fyno.core.FynoUser
 class GetPermissions : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         askNotificationPermission()
-        super.onCreate(savedInstanceState)
+        FynoUser.getFcmToken()?.let {
+            FynoUser.setFcmToken(it)
+        }
+        FynoUser.getMiToken()?.let {
+            FynoUser.setMiToken(it)
+        }
         finish()
     }
 
