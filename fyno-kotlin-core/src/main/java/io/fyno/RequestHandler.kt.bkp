@@ -1,12 +1,12 @@
 package io.fyno.core
 
+import FynoContextCreator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.database.Cursor
 import android.util.Log
 import io.fyno.core.FynoCore.Companion.TAG
 import io.fyno.core.helpers.SQLDataHelper
-import io.fyno.core.utils.FynoContextCreator
 import io.fyno.core.utils.Logger
 import kotlinx.coroutines.*
 import org.json.JSONObject
@@ -69,12 +69,11 @@ object RequestHandler {
                 request.postData?.getString("distinct_id")?.let { distinctId ->
                     val token = async { JWTRequestHandler().fetchAndSetJWTToken(distinctId) }.await()
                     if (token.isNullOrEmpty()) {
-                        Logger.w(TAG,"JWT token fetch failed");
-                        return@withContext false
+                        throw IllegalStateException("JWT token fetch failed")
                     }
                 }
             }
-            Logger.i(TAG, "doRequestAsync: request started for $url")
+            Log.i(TAG, "doRequestAsync: request started for $url")
             conn.setRequestProperties()
             conn.readTimeout = TIMEOUT
             conn.connectTimeout = TIMEOUT
@@ -91,20 +90,19 @@ object RequestHandler {
             }
 
             val responseCode = conn.responseCode
-            Logger.i(TAG, "doRequestAsync: Request finished with code : $responseCode")
+            Log.i(TAG, "doRequestAsync: Request finished with code : $responseCode")
             when (responseCode) {
                 in 200..299 -> {
                     if (url.path.matches(mergeRegex)) {
                         mergeRegex.find(url.path)?.groups?.get(2)?.value?.let {
                             val token = async { JWTRequestHandler().fetchAndSetJWTToken(it) }.await()
                             if (token.isNullOrEmpty()) {
-                                Logger.w(TAG,"JWT token fetch failed");
-                                return@withContext false
+                                throw IllegalStateException("JWT token fetch failed")
                             }
                         }
                     }
                     if (isCallBackRequest(request.url)) {
-                        deleteCBRequestFromDb(id, context?.applicationContext)
+                        deleteCBRequestFromDb(id, context)
                         conn.disconnect()
                         return@withContext true
                     }
@@ -113,10 +111,6 @@ object RequestHandler {
                     true
                 }
                 in 400..499 -> {
-                    if(responseCode == 404) {
-                        conn.disconnect()
-                        return@withContext false
-                    }
                     val inputStream = conn.errorStream
                     val response = inputStream.bufferedReader().use(BufferedReader::readText)
                     val jsonResponse = JSONObject(response)
@@ -231,131 +225,57 @@ object RequestHandler {
         }
     }
 
-//    @SuppressLint("Range")
-//    suspend fun processCBRequests(context: Context?, caller: String? = "") {
-//        var cursor: Cursor? = null
-//        var req_id by Delegates.notNull<Int>()
-//        try {
-//            while (true) {
-//                if(cursor != null && !cursor.isClosed) cursor.close()
-//                cursor = SQLDataHelper(context).getNextRequest("callbacks")
-//                if (cursor.moveToNext()) {
-//                    val url = cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_URL))
-//                    val postDataStr =
-//                        cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_POST_DATA))
-//                    val postData = if (postDataStr != null) JSONObject(postDataStr) else null
-//                    val method =
-//                        cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_METHOD))
-//                    val id = cursor.getInt(cursor.getColumnIndex(SQLDataHelper.COLUMN_ID))
-//                    req_id = id
-//                    val lastProcessedTimeMillis =
-//                        cursor.getLong(cursor.getColumnIndex(SQLDataHelper.COLUMN_LAST_PROCESSED_AT))
-//                    val timeDifference = System.currentTimeMillis() - lastProcessedTimeMillis
-//
-//                    if (caller != "requestPOST" && timeDifference < 2000) {
-//                        cursor.close()
-//                        continue
-//                    }
-//                    cursor.close()
-//
-//                    SQLDataHelper(context).updateStatusAndLastProcessedTime(
-//                        id,
-//                        "callbacks",
-//                        "processing"
-//                    )
-//
-//                    val request = Request(url, postData, method)
-//                    handleRetries(request, id, context)
-//                } else {
-//                    cursor.close()
-//                    break
-//                }
-//            }
-//        } catch (e: Exception) {
-//            Logger.w(TAG, "Unable to process the request")
-//            req_id.let {
-//                SQLDataHelper(context).updateStatusAndLastProcessedTime(
-//                    req_id,
-//                    "callbacks",
-//                    "not_processed"
-//                )
-//            }
-//        } finally {
-//            cursor?.close()
-//        }
-//    }
-
     @SuppressLint("Range")
     suspend fun processCBRequests(context: Context?, caller: String? = "") {
-        withContext(Dispatchers.IO) {
-            async {
-                var cursor: Cursor? = null
-                var req_id by Delegates.notNull<Int>()
-                val db = SQLDataHelper(context)
-                try {
-                    while (true) {
-                        if (cursor != null && !cursor.isClosed) cursor.close()
-                        cursor = db.getNextRequest("callbacks")
-                        if (cursor.moveToNext()) {
-                            val url =
-                                cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_URL))
-                            val postDataStr =
-                                cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_POST_DATA))
-                            val postData =
-                                if (postDataStr != null) JSONObject(postDataStr) else null
-                            val method =
-                                cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_METHOD))
-                            val id = cursor.getInt(cursor.getColumnIndex(SQLDataHelper.COLUMN_ID))
-                            val lastProcessedTimeMillis =
-                                cursor.getLong(cursor.getColumnIndex(SQLDataHelper.COLUMN_LAST_PROCESSED_AT))
-                            req_id = id
-                            val timeDifference =
-                                System.currentTimeMillis() - lastProcessedTimeMillis
+        var cursor: Cursor? = null
+        var req_id by Delegates.notNull<Int>()
+        try {
+            while (true) {
+                if(cursor != null && !cursor.isClosed) cursor.close()
+                cursor = SQLDataHelper(context).getNextRequest("callbacks")
+                if (cursor.moveToNext()) {
+                    val url = cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_URL))
+                    val postDataStr =
+                        cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_POST_DATA))
+                    val postData = if (postDataStr != null) JSONObject(postDataStr) else null
+                    val method =
+                        cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_METHOD))
+                    val id = cursor.getInt(cursor.getColumnIndex(SQLDataHelper.COLUMN_ID))
+                    req_id = id
+                    val lastProcessedTimeMillis =
+                        cursor.getLong(cursor.getColumnIndex(SQLDataHelper.COLUMN_LAST_PROCESSED_AT))
+                    val timeDifference = System.currentTimeMillis() - lastProcessedTimeMillis
 
-                            if (caller != "requestPOST" && timeDifference < 2000) {
-                                cursor.close()
-                                continue
-                            }
-                            cursor.close()
-
-                            db.updateStatusAndLastProcessedTime(
-                                id,
-                                "callbacks",
-                                "processing"
-                            )
-
-                            val request = Request(url, postData, method)
-                            val success = async { handleRetries(request, id, context) }.await();
-                            if (success) {
-                                db.deleteRequestByID(id, "callbacks")
-                            } else {
-                                db.updateStatusAndLastProcessedTime(
-                                    id,
-                                    "callbacks",
-                                    "not_processed"
-                                )
-                                db.close()
-                                break;
-                            }
-                        } else {
-                            db.close()
-                            break
-                        }
+                    if (caller != "requestPOST" && timeDifference < 2000) {
+                        cursor.close()
+                        continue
                     }
-                } catch (e: Exception) {
-                    Logger.w(TAG, "Unable to process the request")
-                    req_id.let {
-                        db.updateStatusAndLastProcessedTime(
-                            req_id,
-                            "callbacks",
-                            "not_processed"
-                        )
-                    }
-                } finally {
-                    cursor?.close()
-                    db.close()
+                    cursor.close()
+
+                    SQLDataHelper(context).updateStatusAndLastProcessedTime(
+                        id,
+                        "callbacks",
+                        "processing"
+                    )
+
+                    val request = Request(url, postData, method)
+                    handleRetries(request, id, context)
+                } else {
+                    cursor.close()
+                    break
                 }
-            }.await()
+            }
+        } catch (e: Exception) {
+            Logger.w(TAG, "Unable to process the request")
+            req_id.let {
+                SQLDataHelper(context).updateStatusAndLastProcessedTime(
+                    req_id,
+                    "callbacks",
+                    "not_processed"
+                )
+            }
+        } finally {
+            cursor?.close()
         }
     }
 
@@ -383,8 +303,8 @@ object RequestHandler {
                 }
             }
         } catch (e: Exception) {
-            Logger.w(TAG, "requestPost: Failed to send request - ${e.stackTrace}")
-            Logger.e(TAG, "requestPOST: ${e.message}",e )
+            Log.w(TAG, e.stackTrace)
+            Log.e(TAG, "requestPOST: ",e )
         }
     }
 
@@ -434,7 +354,7 @@ object RequestHandler {
     }
 
     private fun deleteCBRequestFromDb(id: Int?, context: Context?) {
-        sqlDataHelper = SQLDataHelper(context?.applicationContext)
+        sqlDataHelper = SQLDataHelper(context)
         sqlDataHelper.deleteRequestByID(id, "callbacks")
         sqlDataHelper.close()
     }

@@ -1,9 +1,9 @@
 package io.fyno.core
 
 import android.util.Log
-import androidx.core.app.NotificationManagerCompat
 import io.fyno.core.utils.FynoUtils
 import io.fyno.core.helpers.Config
+import io.fyno.core.utils.FynoConstants
 import io.fyno.core.utils.FynoContextCreator
 import io.fyno.core.utils.Logger
 import kotlinx.coroutines.CoroutineScope
@@ -12,9 +12,72 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
+
 object FynoUser {
     private const val TAG = "FynoUser"
     private fun updatePush(tokenType: String, token: String) {
+        val permissions = if (FynoCore.areNotificationPermissionsEnabled()) 1 else 0
+        if (getIdentity().isNotEmpty() && getWorkspace().isNotEmpty()) {
+            if((permissions.toString() != FynoContextCreator.sqlDataHelper.getConfigByKey(
+                "fyno_push_permission"
+            ).value) || (getIdentity() != FynoContextCreator.sqlDataHelper.getConfigByKey(
+                    "fyno_push_distinct_id"
+                ).value)
+            ){
+                runBlocking {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            FynoCore.getString("VERSION")
+                            Logger.i(TAG, "updatePush: Updating token for user ${getIdentity()}")
+                            val endpoint = FynoUtils().getEndpoint(
+                                "update_channel",
+                                getWorkspace(),
+                                env = "live",
+                                profile = getIdentity(),
+                                newId = null,
+                                version = FynoCore.getString("VERSION")
+                            )
+                            val requestBody = JSONObject().apply {
+                                put("channel", JSONObject().apply {
+                                    put("push", JSONArray(listOf(JSONObject().apply {
+                                        put("token", "$tokenType:$token")
+                                        put("integration_id", getFynoIntegration())
+                                        put("status", permissions)
+                                    })))
+                                })
+                            }
+                            RequestHandler.requestPOST(endpoint, requestBody, "PATCH")
+                            FynoContextCreator.sqlDataHelper.insertConfigByKey(
+                                Config(
+                                    key = "fyno_${tokenType}_token",
+                                    value = token
+                                )
+                            )
+                            FynoContextCreator.sqlDataHelper.insertConfigByKey(
+                                Config(
+                                    key = "fyno_push_permission",
+                                    value = permissions.toString()
+                                )
+                            )
+                            FynoContextCreator.sqlDataHelper.insertConfigByKey(
+                                Config(
+                                    key = "fyno_push_distinct_id",
+                                    value = getIdentity()
+                                )
+                            )
+                        } catch (e: Exception) {
+                            Logger.d(
+                                TAG,
+                                "Exception in set${tokenType}Token: ${e.message}"
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateInapp(token: String, integrationId: String){
         if (getIdentity().isNotEmpty() && getWorkspace().isNotEmpty()) {
             runBlocking {
                 CoroutineScope(Dispatchers.IO).launch {
@@ -22,31 +85,31 @@ object FynoUser {
                         val endpoint = FynoUtils().getEndpoint(
                             "update_channel",
                             getWorkspace(),
-                            profile = getIdentity(),
+                            env = "live",
+                            profile = token,
+                            newId = null,
                             version = FynoCore.getString("VERSION")
                         )
-                        val notificationStatus =
-                            if (FynoCore.areNotificationPermissionsEnabled()) 1 else 0
                         val requestBody = JSONObject().apply {
                             put("channel", JSONObject().apply {
-                                put("push", JSONArray(listOf(JSONObject().apply {
-                                    put("token", "$tokenType:$token")
-                                    put("integration_id", getIntegrationId(tokenType))
-                                    put("status", notificationStatus)
+                                put("inapp", JSONArray(listOf(JSONObject().apply {
+                                    put("token", token)
+                                    put("integration_id", integrationId)
+                                    put("status", 1)
                                 })))
                             })
                         }
                         RequestHandler.requestPOST(endpoint, requestBody, "PATCH")
                         FynoContextCreator.sqlDataHelper.insertConfigByKey(
                             Config(
-                                key = "fyno_${tokenType}_token",
+                                key = "fyno_inapp_token",
                                 value = token
                             )
                         )
                     } catch (e: Exception) {
                         Logger.d(
                             TAG,
-                            "Exception in set${tokenType.capitalize()}Token: ${e.message}"
+                            "Exception in set Inapp Token: ${e.message}"
                         )
                     }
                 }
@@ -62,7 +125,9 @@ object FynoUser {
                         val endpoint = FynoUtils().getEndpoint(
                             "update_channel",
                             getWorkspace(),
+                            env = "live",
                             profile = getIdentity(),
+                            newId = null,
                             version = FynoCore.getString("VERSION")
                         )
                         val requestBody = JSONObject().apply {
@@ -90,10 +155,10 @@ object FynoUser {
     }
 
     private fun getIntegrationId(tokenType: String): String {
-        when (tokenType) {
-            "fcm_token" -> return getFcmIntegration()
-            "mi_token" -> return getMiIntegration()
-            else -> return ""
+        return when (tokenType) {
+            "fcm_token" -> getFcmIntegration()
+            "mi_token" -> getMiIntegration()
+            else -> ""
         }
     }
 
@@ -200,5 +265,21 @@ object FynoUser {
 
     fun getUserName(): String {
         return FynoContextCreator.sqlDataHelper.getConfigByKey("fyno_user_name").value ?: ""
+    }
+
+    fun setJWTToken(jwtToken:String){
+        FynoContextCreator.sqlDataHelper.insertConfigByKey(Config(key = "jwt_token", value = jwtToken))
+    }
+
+    fun getJWTToken(): String{
+        return FynoContextCreator.sqlDataHelper.getConfigByKey("jwt_token").value ?: ""
+    }
+
+    fun setInapp(distinct_id: String, integrationId: String){
+        updateInapp(distinct_id, integrationId);
+    }
+
+    fun getInapp(): String {
+        return FynoContextCreator.sqlDataHelper.getConfigByKey("fyno_inapp_token").value ?: ""
     }
 }

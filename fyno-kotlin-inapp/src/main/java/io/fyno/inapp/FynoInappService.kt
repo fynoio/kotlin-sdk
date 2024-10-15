@@ -4,6 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
+import io.fyno.core.utils.Logger
 import io.fyno.pushlibrary.helper.NotificationHelper
 import org.json.JSONObject
 import io.socket.client.IO
@@ -17,6 +18,7 @@ open class FynoInappService : Service() {
     var page = 1
     override fun onBind(intent: Intent?): IBinder? {
         // TODO("Not yet implemented")
+        return TODO("Provide the return value")
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -53,7 +55,7 @@ open class FynoInappService : Service() {
 
     open fun notify(remoteMessage: JSONObject) {
         if(mSocket.isActive) {
-            Log.d("In-FynoSDK", "handleFynoMessageReceived: ${remoteMessage.toString()}")
+            Logger.d("In-FynoSDK", "handleFynoMessageReceived: ${remoteMessage.toString()}")
             NotificationHelper.renderInappMessage(this, remoteMessage.toString())
         }
     }
@@ -85,13 +87,13 @@ open class FynoInappService : Service() {
         }
     }
 
-    open fun markMessage(msg) {
+    open fun markMessage(msg: JSONObject) {
         if(mSocket.isActive) {
             mSocket.emit("message:read", msg)
         }
     }
 
-    open fun deleteMessage(msg) {
+    open fun deleteMessage(msg: JSONObject) {
         if(mSocket.isActive) {
             mSocket.emit("message:deleted", msg)
         }

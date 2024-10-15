@@ -6,7 +6,6 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.telephony.TelephonyManager
-import android.util.Log
 
 
 enum class NetworkType(val networkName: String) {
@@ -52,8 +51,8 @@ object NetworkDetails {
         return result
     }
     fun getNetworkType(): NetworkType {
-        val context = FynoContextCreator.context
-        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val context = FynoContextCreator.getContext()
+        val cm = context?.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val currentNetwork = getConnectionType(context)
 //        val capabilities = cm.getNetworkCapabilities(currentNetwork)
 //        val linkProperties = cm.getLinkProperties(currentNetwork)

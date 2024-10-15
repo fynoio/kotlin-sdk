@@ -2,19 +2,19 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
-      <entry key="WeatherApp:fyno-kotlin-callback [build]">
-        <State />
-      </entry>
       <entry key="WeatherApp:fyno-kotlin-callback [publish]">
         <State />
       </entry>
-      <entry key="WeatherApp:fyno-kotlin-core [buildDependents]">
+      <entry key="WeatherApp:fyno-kotlin-push [build]">
         <State />
       </entry>
-      <entry key="WeatherApp:fyno-kotlin-core [build]">
+      <entry key="WeatherApp:fyno-kotlin-push [publish]">
         <State />
       </entry>
-      <entry key="WeatherApp:fyno-kotlin-core [publish]">
+      <entry key="WeatherApp:fyno-kotlin-sdk [build]">
+        <State />
+      </entry>
+      <entry key="WeatherApp:fyno-kotlin-sdk [publish]">
         <State />
       </entry>
       <entry key="app">
@@ -25,12 +25,12 @@
               <deviceKey>
                 <Key>
                   <type value="VIRTUAL_DEVICE_PATH" />
-                  <value value="$USER_HOME$/.android/avd/Pixel_6_API_33.avd" />
+                  <value value="$USER_HOME$/.android/avd/Pixel_2_XL_API_26.avd" />
                 </Key>
               </deviceKey>
             </Target>
           </targetSelectedWithDropDown>
-          <timeTargetWasSelectedWithDropDown value="2023-10-29T13:17:43.226769Z" />
+          <timeTargetWasSelectedWithDropDown value="2024-10-14T12:17:44.866908Z" />
           <runningDeviceTargetsSelectedWithDialog>
             <Target>
               <type value="RUNNING_DEVICE_TARGET" />

@@ -6,13 +6,16 @@ import android.icu.lang.UCharacter.GraphemeClusterBreak.T
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import io.fyno.core.FynoUser
+import io.fyno.core.utils.Logger
 
-internal class GetPermissions : AppCompatActivity() {
+class GetPermissions : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         askNotificationPermission()
         FynoUser.getFcmToken()?.let {
             FynoUser.setFcmToken(it)
@@ -27,13 +30,10 @@ internal class GetPermissions : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            FynoUser.getFcmToken()?.let { FynoUser.setFcmToken(it) }
-            Toast.makeText(this, "Notifications permission granted", Toast.LENGTH_SHORT)
-                .show()
+            Logger.d("PermissionDialog", "Notifications permission granted")
+            updateUserPermissionStatus(true)
         } else {
-            Toast.makeText(
-                this, "Can't post notifications without POST_NOTIFICATIONS permission",
-                Toast.LENGTH_LONG).show()
+            Logger.d("PermissionDialog", "Can't post notifications without POST_NOTIFICATIONS permission")
         }
     }
 
@@ -44,6 +44,17 @@ internal class GetPermissions : AppCompatActivity() {
             ) {
             } else {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun updateUserPermissionStatus(isGranted: Boolean) {
+        if (isGranted) {
+            FynoUser.getFcmToken()?.let {
+                FynoUser.setFcmToken(it)
+            }
+            FynoUser.getMiToken()?.let {
+                FynoUser.setMiToken(it)
             }
         }
     }

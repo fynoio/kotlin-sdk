@@ -13,6 +13,7 @@ import io.fyno.pushlibrary.models.PushRegion
 //import io.sentry.protocol.User
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -22,16 +23,12 @@ public object FynoSdk {
         context: Context,
         workspaceId: String,
         integrationId: String,
-        token: String,
         userId: String? = null,
         version: String = "live"
     ) {
         runBlocking {
             CoroutineScope(Dispatchers.IO).launch {
-                FynoCore.initialize(context, workspaceId, token, integrationId, version)
-                if (!userId.isNullOrBlank()) {
-                    FynoCore.identify(uniqueId = userId, update = true)
-                }
+                FynoCore.initialize(context, workspaceId, integrationId, version, userId)
             }
         }
     }
@@ -46,13 +43,19 @@ public object FynoSdk {
         pushRegion: PushRegion? = PushRegion.INDIA,
     ) {
         CoroutineScope(Dispatchers.IO).launch {
-            Handler(Looper.getMainLooper()).postDelayed({
-                FynoPush().registerPush(
-                    xiaomiApplicationId,
-                    xiaomiApplicationKey,
-                    pushRegion
-                )
-            }, 5000);
+            delay(5000)
+            FynoPush().registerPush(
+                xiaomiApplicationId,
+                xiaomiApplicationKey,
+                pushRegion
+            )
+        }
+    }
+
+    fun registerInapp(integrationId: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            delay(5000)
+            FynoPush().registerInapp(integrationId)
         }
     }
 

@@ -2,7 +2,6 @@ package io.fyno.core
 
 import android.content.*
 import androidx.core.app.NotificationManagerCompat
-import io.fyno.core.helpers.SQLDataHelper
 import io.fyno.core.utils.FynoContextCreator
 import io.fyno.core.utils.FynoUtils
 import io.fyno.core.utils.LogLevel
@@ -25,38 +24,37 @@ class FynoCore {
         lateinit var appContext: Context
         private lateinit var fynoPreferences: SharedPreferences
 
-        fun initialize(context: Context, WSId: String, token: String, version: String = "live") {
-            require(WSId.isNotEmpty()) { "Workspace Id is empty" }
-
-            val sqlDataHelper = SQLDataHelper(context)
-            sqlDataHelper.updateAllRequestsToNotProcessed()
+        fun initialize(context: Context, wsid: String, integration: String, version: String = "live", userId: String? = null) {
+            require(wsid.isNotEmpty()) { "Workspace Id is empty" }
 
             appContext = context
-            FynoContextCreator.context = appContext
+            FynoContextCreator.setContext(appContext);
             NetworkDetails.getNetworkType()
             ConnectionStateMonitor().enable(context)
+            FynoContextCreator.sqlDataHelper.updateAllRequestsToNotProcessed()
 
             fynoPreferences = context.getSharedPreferences(
                 "${context.packageName}-fynoio",
                 ContextWrapper.MODE_PRIVATE
             )
 
-            setString("WS_ID", WSId)
-            setString("SECRET", token)
+            setString("WS_ID", wsid)
             setString("VERSION", version)
             FynoUser.setFynoIntegration(integration)
             FynoUser.setWorkspace(wsid)
-            FynoUser.setApi(token)
 
-            if (FynoUser.getIdentity().isEmpty()) {
+            if (FynoUser.getIdentity().isEmpty() && userId.isNullOrBlank()) {
                 val uuid = UUID.randomUUID().toString()
                 try {
                     runBlocking {
                         CoroutineScope(Dispatchers.IO).launch {
+//                            JWTRequestHandler().fetchAndSetJWTToken(uuid)
                             val endpoint = FynoUtils().getEndpoint(
                                 "create_profile",
                                 FynoUser.getWorkspace(),
+                                env = "live",
                                 profile = uuid,
+                                newId = null,
                                 version = getString("VERSION")
                             )
                             RequestHandler.requestPOST(
@@ -71,6 +69,38 @@ class FynoCore {
                 } catch (e: Exception) {
                     Logger.e(TAG, "In Exception initialize: ${e.message}", e)
                 }
+            } else {
+                if(FynoUser.getIdentity() == userId) return
+                if (FynoUser.getIdentity().isEmpty()) {
+                    userId?.let {
+                        try {
+                            runBlocking {
+                                CoroutineScope(Dispatchers.IO).launch {
+//                                    JWTRequestHandler().fetchAndSetJWTToken(userId)
+                                    val endpoint = FynoUtils().getEndpoint(
+                                        "create_profile",
+                                        FynoUser.getWorkspace(),
+                                        env = "live",
+                                        profile = userId,
+                                        newId = null,
+                                        version = getString("VERSION")
+                                    )
+                                    RequestHandler.requestPOST(
+                                        endpoint,
+                                        JSONObject().put("distinct_id", userId),
+                                        "POST"
+                                    )
+                                    identify(userId, update = false)
+                                    setFlag("isDirty", true)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Logger.e(TAG, "In Exception initialize: ${e.message}", e)
+                        }
+                    }
+                } else {
+                    userId?.let { identify(it, update = true) }
+                }
             }
         }
 
@@ -80,26 +110,37 @@ class FynoCore {
                 return
             }
             val oldDistinctId = FynoUser.getIdentity()
-            if (oldDistinctId == uniqueId) return
-
-//            LoggerHelper().logDebug(TAG, "identify: $uniqueId, $oldDistinctId")
+            if (oldDistinctId == uniqueId) {
+                return
+            }
             if (update) {
                 runBlocking {
                     CoroutineScope(Dispatchers.IO).launch {
                         if (oldDistinctId.isNotBlank()) {
+//                            if (FynoUser.getJWTToken().isEmpty()) {
+//                                JWTRequestHandler().fetchAndSetJWTToken(oldDistinctId)
+//                            }
                             val mergeEndpoint = FynoUtils().getEndpoint(
                                 "merge_profile",
                                 FynoUser.getWorkspace(),
+                                env = "live",
                                 profile = oldDistinctId,
                                 newId = uniqueId,
                                 version = getString("VERSION")
                             )
                             RequestHandler.requestPOST(mergeEndpoint, null, "PATCH")
+//                            JWTRequestHandler().fetchAndSetJWTToken(uniqueId)
+                            if (name?.isNotEmpty() == true) updateName(name)
                         } else {
+//                            if (FynoUser.getJWTToken().isEmpty()) {
+//                                JWTRequestHandler().fetchAndSetJWTToken(uniqueId)
+//                            }
                             val upsertEndpoint = FynoUtils().getEndpoint(
                                 "upsert_profile",
                                 FynoUser.getWorkspace(),
+                                env = "live",
                                 profile = uniqueId,
+                                newId = null,
                                 version = getString("VERSION")
                             )
                             RequestHandler.requestPOST(
@@ -112,6 +153,22 @@ class FynoCore {
                 }
             }
             FynoUser.identify(uniqueId)
+        }
+        private fun updateName(name: String?) {
+            if(name.isNullOrEmpty()){
+                return
+            }
+            val upsertEndpoint = FynoUtils().getEndpoint(
+                "upsert_profile",
+                FynoUser.getWorkspace(),
+                env = "live",
+                profile = FynoUser.getIdentity(),
+                newId = null,
+                version = getString("VERSION")
+            )
+            runBlocking(Dispatchers.IO) {
+                RequestHandler.requestPOST(upsertEndpoint, getParamsObj(FynoUser.getIdentity(), name), "PUT")
+            }
         }
 
         private fun getParamsObj(uniqueId: String, name: String? = null): JSONObject {
@@ -179,19 +236,24 @@ class FynoCore {
                     val deleteEndpoint = FynoUtils().getEndpoint(
                         "delete_channel",
                         FynoUser.getWorkspace(),
+                        env = "live",
                         profile = FynoUser.getIdentity(),
+                        newId = null,
                         version = getString("VERSION")
                     )
                     RequestHandler.requestPOST(deleteEndpoint, deleteJson, "POST")
-
+//                    JWTRequestHandler().fetchAndSetJWTToken(uuid)
                     val createProfileEndpoint = FynoUtils().getEndpoint(
                         "create_profile",
                         FynoUser.getWorkspace(),
+                        env = "live",
+                        profile = null,
+                        newId = null,
                         version = getString("VERSION")
                     )
                     RequestHandler.requestPOST(createProfileEndpoint, jsonObject, "POST")
-
                     identify(uuid, "", false)
+                    FynoContextCreator.sqlDataHelper.close()
                 }
             }
         }
@@ -233,6 +295,7 @@ class FynoCore {
                         val mergeProfileEndpoint = FynoUtils().getEndpoint(
                             "merge_profile",
                             FynoUser.getWorkspace(),
+                            env = null,
                             profile = oldDistinctId,
                             newId = newDistinctId,
                             version = getString("VERSION")
@@ -245,30 +308,6 @@ class FynoCore {
                 }
             }
         }
-//        fun mergeProfile(context: Context, oldDistinctId: String, newDistinctId: String) {
-//            if (!FynoContextCreator.isInitialized()){
-//                FynoContextCreator.context = context
-//            }
-//            if (oldDistinctId.isBlank() or newDistinctId.isBlank()) {
-//                Logger.w(TAG, "mergeProfile: Failed as Both old id and new id are required to merge profile")
-//                return
-//            }
-//
-//            if(oldDistinctId == newDistinctId) {
-//                Logger.w(TAG, "mergeProfile: No need to merge as both old id and new id are same")
-//                return
-//            }
-//
-//            CoroutineScope(Dispatchers.IO).launch  {
-//                try {
-//                    val mergeProfileEndpoint = FynoUtils().getEndpoint("merge_profile", FynoUser.getWorkspace(), profile = oldDistinctId, newId = newDistinctId, version = getString("VERSION"))
-//                    RequestHandler.requestPOST(mergeProfileEndpoint,null, "PATCH")
-//                    identify(newDistinctId, "", false)
-//                } catch (e: Exception) {
-//                    Logger.w(TAG, "mergeProfile: Failed with exception ${e.message}")
-//                }
-//            }
-//        }
 
         private fun setString(key: String, value: String) {
             fynoPreferences.edit().putString(key, value).apply()

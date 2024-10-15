@@ -39,7 +39,7 @@ import java.util.*
 
 
 object NotificationHelper {
-//    private fun createOnDismissedIntent(
+    //    private fun createOnDismissedIntent(
 //        context: Context,
 //        notificationId: Int,
 //        callbackUrl: String
@@ -53,25 +53,25 @@ object NotificationHelper {
 //            notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 //        )
 //    }
-private fun createOnDismissedIntent(
-    context: Context,
-    notificationId: Int,
-    callbackUrl: String?
-): PendingIntent? {
-    val intent = Intent(context, NotificationDismissedReceiver::class.java).apply {
-        putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.notificationId", notificationId)
-        callbackUrl?.let { putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.callback", it) }
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+    private fun createOnDismissedIntent(
+        context: Context,
+        notificationId: Int,
+        callbackUrl: String?
+    ): PendingIntent? {
+        val intent = Intent(context, NotificationDismissedReceiver::class.java).apply {
+            putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.notificationId", notificationId)
+            callbackUrl?.let { putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.callback", it) }
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        return intent.let {
+            PendingIntent.getBroadcast(
+                context,
+                notificationId,
+                it,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
     }
-    return intent.let {
-        PendingIntent.getBroadcast(
-        context,
-        notificationId,
-            it,
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-    )
-    }
-}
     private fun createOnClickIntent(
         context: Context,
         notificationId: Int,
@@ -269,17 +269,37 @@ intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString
             val builder = Builder(context, notificationModel.notificationChannel.id)
 
             val basicNotification = notificationModel.BasicNotification
-
-            val defaultSmallIcon = when {
-                basicNotification.smallIconDrawable.isNullOrBlank() -> {
-                    context.packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA)
-                    val iconName = context.packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA).metaData?.getString("com.google.firebase.messaging.default_notification_icon") ?: "ic_notification"
-                    context.applicationInfo.icon
+            var defaultSmallIcon = 0
+            try {
+                defaultSmallIcon = when {
+                    !basicNotification.smallIconDrawable.isNullOrBlank() -> {
+                        // Icon from template (if provided)
+                        context.resources.getIdentifier(
+                            basicNotification.smallIconDrawable,
+                            "drawable",
+                            context.packageName
+                        )
+                    }
+                    else -> {
+                        // Get default notification icon from manifest or fallback to app icon
+                        val appInfo = context.packageManager.getApplicationInfo(
+                            context.packageName,
+                            PackageManager.GET_META_DATA
+                        )
+                        appInfo.metaData?.getInt("com.google.firebase.messaging.default_notification_icon")
+                            ?: context.applicationInfo.icon
+                    }
                 }
-                else -> context.resources.getIdentifier(basicNotification.smallIconDrawable, "drawable", context.packageName)
+
+                // Ensure a valid icon is set if not available in template/manifest
+                if (defaultSmallIcon == 0) {
+                    defaultSmallIcon = context.applicationInfo.icon
+                }
+                builder.setSmallIcon(defaultSmallIcon)
+            } catch (e: Exception) {
+                builder.setSmallIcon(context.applicationInfo.icon)
             }
 
-            builder.setSmallIcon(defaultSmallIcon)
             builder.setChannelId(notificationModel.notificationChannel.id)
 
             basicNotification.priority.let { priority ->
@@ -298,25 +318,25 @@ intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString
 
             notificationModel.bigPicture?.let { bigPicture ->
                 basicNotification.largeIconUrl?.takeIf { it.isNotBlank() }?.let { url ->
-                        try {
-                            context.run {
-                                val isNetworkOnline = NetworkDetails.isOnline(context)
-                                if (!isNetworkOnline) {
-                                    val icon: Bitmap = Glide.with(context)
-                                        .asBitmap()
-                                        .apply(
-                                            RequestOptions().encodeFormat(Bitmap.CompressFormat.JPEG)
-                                                .encodeQuality(50)
-                                        )
-                                        .load(url)
-                                        .submit()
-                                        .get()
-                                    builder.setLargeIcon(icon)
-                                }
+                    try {
+                        context.run {
+                            val isNetworkOnline = NetworkDetails.isOnline(context)
+                            if (!isNetworkOnline) {
+                                val icon: Bitmap = Glide.with(context)
+                                    .asBitmap()
+                                    .apply(
+                                        RequestOptions().encodeFormat(Bitmap.CompressFormat.JPEG)
+                                            .encodeQuality(50)
+                                    )
+                                    .load(url)
+                                    .submit()
+                                    .get()
+                                builder.setLargeIcon(icon)
                             }
-                        } catch (error: Exception) {
-                            Logger.i(TAG, "showNotification: Image download failed")
                         }
+                    } catch (error: Exception) {
+                        Logger.i(TAG, "showNotification: Image download failed")
+                    }
 
                 }
             }
@@ -417,7 +437,7 @@ intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString
             pictureStyle.setSummaryText(it)
         }
         if(Build.VERSION.SDK_INT >= 31)
-        pictureStyle.showBigPictureWhenCollapsed(true)
+            pictureStyle.showBigPictureWhenCollapsed(true)
         builder.setStyle(pictureStyle)
     }
 
@@ -452,8 +472,9 @@ intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString
         return try {
             if (isNullOrBlank())
                 return JSONObject()
-            return JSONObject(this.replace("\\n","").replace("\\",""))
+            return JSONObject(this.replace("\\n","").replace("\\\\","\\"))
         } catch (e: Exception) {
+            Logger.e(TAG, "toNotificationObject: Error while converting notification string to object", e );
             JSONObject()
         }
     }

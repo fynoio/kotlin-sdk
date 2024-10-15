@@ -13,14 +13,22 @@ import io.fyno.pushlibrary.helper.NotificationHelper.rawMessage
 import io.fyno.pushlibrary.helper.NotificationHelper.renderFCMMessage
 import java.lang.Exception
 
+interface FynoPNCallback {
+        fun onNotificationReceived(message: RemoteMessage)
+        fun onNotificationClicked(message: RemoteMessage)
+        fun onNotificationDismissed(message: RemoteMessage)
+}
 open class FcmHandlerService : FirebaseMessagingService() {
+    private var callback: FynoPNCallback? = null
 
-    open fun onNotificationReceived(notification: RemoteMessage) {
-        // Override Method
+    fun setCallback(param: FynoPNCallback) {
+        callback = param
     }
 
     override fun onNewToken(token: String) {
         Logger.d(TAG, "onNewToken: $token")
+        if(FynoContextCreator.isInitialized())
+            FynoUser.setFcmToken(token)
         super.onNewToken(token)
     }
 
@@ -29,8 +37,10 @@ open class FcmHandlerService : FirebaseMessagingService() {
             Logger.d(TAG, "onMessageReceived: ${message.rawData}")
             when {
                 message.isFynoMessage() -> {
-                    val context = if(FynoContextCreator.isInitialized())FynoContextCreator.context else this
-                    renderFCMMessage(context, message.rawMessage())
+                    val context = if(FynoContextCreator.isInitialized())FynoContextCreator.getContext() else this.applicationContext
+                    if (context != null) {
+                        renderFCMMessage(context, message.rawMessage())
+                    }
                 }
                 else -> {
                     val callback = message.data["callback"]
@@ -40,7 +50,7 @@ open class FcmHandlerService : FirebaseMessagingService() {
                     super.onMessageReceived(message)
                 }
             }
-            onNotificationReceived(message)
+            callback?.onNotificationReceived(message)
         } catch (e:Exception) {
             Logger.e(TAG, e.message.toString(),e)
         }

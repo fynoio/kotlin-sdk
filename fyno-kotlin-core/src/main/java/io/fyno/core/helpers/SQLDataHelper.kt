@@ -1,19 +1,12 @@
 package io.fyno.core.helpers
 
-import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import io.fyno.core.RequestHandler
 import io.fyno.core.utils.Logger
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 
 class Config(
     var key: String? = null,
@@ -57,8 +50,13 @@ class SQLDataHelper(context: Context?) :
             db.execSQL(createReqTableQuery)
             db.execSQL(createCBTableQuery)
         } catch (e: Exception) {
-            Logger.d("db", "onCreate - $e")
+            Logger.e("db", "onCreate - $e", e)
         }
+    }
+
+    override fun close() {
+        db.close()
+        super.close()
     }
 
     fun updateStatusAndLastProcessedTime(id:Int?, tableName: String,status:String){
@@ -93,11 +91,12 @@ class SQLDataHelper(context: Context?) :
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         try {
+            Logger.d("db", "onUpgrade -Drop Tables")
             db.execSQL("DROP TABLE IF EXISTS $TABLENAME_config")
             db.execSQL("DROP TABLE IF EXISTS $REQ_TABLE_NAME")
             db.execSQL("DROP TABLE IF EXISTS $CB_TABLE_NAME")
         } catch (e: Exception) {
-            Logger.d("db", "onUpgrade - $e")
+            Logger.e("db", "onUpgrade - $e", e)
         }
         onCreate(db)
     }
@@ -109,7 +108,7 @@ class SQLDataHelper(context: Context?) :
         try {
             db.insert(TABLENAME_config, null, contentValues)
         } catch (e: Exception) {
-            Logger.d("db", "insert_config - $e")
+            Logger.e("db", "insert_config - $e", e)
         }
     }
 
@@ -128,7 +127,7 @@ class SQLDataHelper(context: Context?) :
         try {
             db.insert(tableName, null, values)
         } catch (e: Exception) {
-            Logger.d(TAG, "insert_requests - $e")
+            Logger.e(TAG, "insert_requests - $e", e)
         }
     }
 
@@ -140,29 +139,15 @@ class SQLDataHelper(context: Context?) :
         try {
             db.delete(tableName,"$COLUMN_ID = ?", arrayOf(id.toString()))
         } catch (e: Exception) {
-            Logger.d("db", "deleteRequestByID - $e")
+            Logger.e("db", "deleteRequestByID - $e", e)
         }
     }
 
-    fun getNextRequest(): Cursor {
+    fun getNextRequest(tableName: String): Cursor {
         return db.query(
-            REQ_TABLE_NAME,
+            tableName,
             null,
-            "$COLUMN_STATUS = \"not_processed\"",
-            null,
-            null,
-            null,
-            "$COLUMN_ID ASC",
-            "1"
-        )
-    }
-
-    @SuppressLint("Range")
-    fun getNextCBRequest(): Cursor {
-        return db.query(
-            CB_TABLE_NAME,
-            null,
-            "$COLUMN_STATUS = \"not_processed\"",
+            "$COLUMN_STATUS = \'not_processed\'",
             null,
             null,
             null,
@@ -191,11 +176,11 @@ class SQLDataHelper(context: Context?) :
                     }
                 }
             } else {
+                c.close()
                 insert_config(table_model_obj)
             }
-            c.close()
         } catch (e: Exception) {
-            Logger.d("db", "insert_configByKey - $e")
+            Logger.e("db", "insert_configByKey - $e", e)
         } finally {
             c?.close()
         }
@@ -218,7 +203,7 @@ class SQLDataHelper(context: Context?) :
             }
             c.close()
         } catch (e: Exception) {
-            Logger.d("db", "getconfigByKey - $e")
+            Logger.e("db", "getConfigByKey - $e", e)
         } finally {
             c?.close()
         }
@@ -229,7 +214,7 @@ class SQLDataHelper(context: Context?) :
         try {
             db.execSQL("DELETE FROM $TABLENAME_config")
         } catch (e: Exception) {
-            Logger.d("db", "deleteAllConfigs - $e")
+            Logger.e("db", "deleteAllConfigs - $e", e)
         }
     }
 
@@ -251,4 +236,3 @@ class SQLDataHelper(context: Context?) :
         const val COLUMN_STATUS = "status"
     }
 }
-

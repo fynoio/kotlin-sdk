@@ -20,22 +20,31 @@ import io.fyno.core.utils.Logger
 import io.fyno.pushlibrary.firebase.FcmHandlerService
 import io.fyno.pushlibrary.mipush.MiPushHelper
 import io.fyno.pushlibrary.models.PushRegion
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.Delayed
 
 class FynoPush {
-    fun showPermissionDialog(){
-        Log.i(FynoCore.TAG, "showPermissionDialog: Im triggered")
+    fun showPermissionDialog(delay: Long = 0){
+        Logger.i(FynoCore.TAG, "showPermissionDialog: Im triggered")
         if(Build.VERSION.SDK_INT <= 24)
             return
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            val intent = Intent(FynoCore.appContext, GetPermissions::class.java)
-            val mNotificationManager = FynoCore.appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            if(!mNotificationManager.areNotificationsEnabled())
-                FynoCore.appContext.startActivity(intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or  Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK ))
-            else
-                FynoUser.getFcmToken()?.let { FynoUser.setFcmToken(it) }
+        try {
+            CoroutineScope(Dispatchers.IO).launch {
+                delay(delay)
+                val intent = Intent(FynoCore.appContext, GetPermissions::class.java)
+                val mNotificationManager = FynoCore.appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                if(!mNotificationManager.areNotificationsEnabled())
+                    FynoCore.appContext.startActivity(intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or  Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK ))
                 Logger.i(FcmHandlerService.TAG, "Notification Permissions are allowed")
-        },5000);
+                FynoUser.getFcmToken()?.let { FynoUser.setFcmToken(it) }
+            }
+        } catch (e:Exception) {
+            Logger.w(FcmHandlerService.TAG, "Unable to show permission dialog")
+        }
     }
 
 
@@ -46,7 +55,7 @@ class FynoPush {
                     return@runBlocking
                 }
                 FynoUser.setFynoIntegration(FCM_Integration_Id)
-                FirebaseApp.initializeApp(FynoContextCreator.context.applicationContext)
+                FirebaseApp.initializeApp(FynoContextCreator.getContext()!!.applicationContext)
                 saveFcmToken()
             }
         } catch (e:Exception) {
@@ -102,7 +111,7 @@ class FynoPush {
         try {
             MiPushClient.registerPush(FynoCore.appContext,App_Id,App_Key)
             FynoUser.setFynoIntegration(Integration_Id)
-            com.xiaomi.mipush.sdk.Logger.setLogger(FynoCore.appContext, object : LoggerInterface {
+            com.xiaomi.mipush.sdk.Logger.setLogger(FynoCore.appContext, object: LoggerInterface {
                 override fun setTag(tag: String?) {
                     Logger.i(MiPushHelper.TAG, "XMPushTag : $tag")
                 }
@@ -129,34 +138,58 @@ class FynoPush {
     }
 
     fun registerPush(appId: String? = "", appKey: String? = "", pushRegion: PushRegion? = PushRegion.INDIA) {
+        try {
+            if(!FynoContextCreator.isInitialized()){
+                Logger.w(
+                    "FynoSDK",
+                    "registerPush: Fyno SDK is not initialized",
+                )
+                return;
+            }
+            val fynoIntegrationId = FynoUser.getFynoIntegration();
+            if(fynoIntegrationId.isEmpty()){
+                Logger.w(
+                    "FynoSDK",
+                    "registerPush: FCM Integration ID is required, received null",
+                )
+                return;
+            }
+            if (identifyOem(Build.MANUFACTURER.lowercase())) {
+                if (!appId.isNullOrEmpty() && !appKey.isNullOrEmpty()) {
+                    if (pushRegion != null) {
+                        setMiRegion(pushRegion)
+                    } else {
+                        setMiRegion(PushRegion.INDIA)
+                    }
+                    registerMiPush(appId, appKey, fynoIntegrationId)
+                } else {
+                    registerFCM(fynoIntegrationId)
+                };
+            } else {
+                registerFCM(fynoIntegrationId)
+            }
+        } catch (e:Exception){
+            Logger.w(FcmHandlerService.TAG, "registerPush: unable to register push - ${e.message}", )
+        }
+    }
+
+    fun registerInapp(integration: String){
         if(!FynoContextCreator.isInitialized()){
             Logger.w(
                 "FynoSDK",
-                "registerPush: Fyno SDK is not initialized",
+                "Fyno context is not initialised",
             )
             return;
         }
-        val fynoIntegrationId = FynoUser.getFynoIntegration();
-        if(fynoIntegrationId.isEmpty()){
+
+        if(FynoUser.getIdentity().isEmpty()){
             Logger.w(
                 "FynoSDK",
-                "registerPush: FCM Integration ID is required, received null",
+                "User is not identified",
             )
             return;
         }
-        if (identifyOem(Build.MANUFACTURER.lowercase())) {
-            if (!appId.isNullOrEmpty() && !appKey.isNullOrEmpty()) {
-                if (pushRegion != null) {
-                    setMiRegion(pushRegion)
-                } else {
-                    setMiRegion(PushRegion.INDIA)
-                }
-                registerMiPush(appId, appKey, fynoIntegrationId)
-            } else {
-                registerFCM(fynoIntegrationId)
-            };
-        } else {
-            registerFCM(fynoIntegrationId)
-        }
+
+        FynoUser.setInapp(FynoUser.getIdentity(), integration)
     }
 }
