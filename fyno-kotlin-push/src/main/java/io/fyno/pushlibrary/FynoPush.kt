@@ -29,7 +29,7 @@ import java.util.concurrent.Delayed
 
 class FynoPush {
     fun showPermissionDialog(delay: Long = 0){
-        Log.i(FynoCore.TAG, "showPermissionDialog: Im triggered")
+        Logger.i(FynoCore.TAG, "showPermissionDialog: Im triggered")
         if(Build.VERSION.SDK_INT <= 24)
             return
         try {
@@ -169,7 +169,7 @@ class FynoPush {
                 registerFCM(fynoIntegrationId)
             }
         } catch (e:Exception){
-            Log.w(FcmHandlerService.TAG, "registerPush: unable to register push - ${e.message}", )
+            Logger.w(FcmHandlerService.TAG, "registerPush: unable to register push - ${e.message}", )
         }
     }
 

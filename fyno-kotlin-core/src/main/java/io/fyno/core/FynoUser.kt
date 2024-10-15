@@ -1,7 +1,9 @@
 package io.fyno.core
 
+import android.util.Log
 import io.fyno.core.utils.FynoUtils
 import io.fyno.core.helpers.Config
+import io.fyno.core.utils.FynoConstants
 import io.fyno.core.utils.FynoContextCreator
 import io.fyno.core.utils.Logger
 import kotlinx.coroutines.CoroutineScope
@@ -25,10 +27,14 @@ object FynoUser {
                 runBlocking {
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
+                            FynoCore.getString("VERSION")
+                            Logger.i(TAG, "updatePush: Updating token for user ${getIdentity()}")
                             val endpoint = FynoUtils().getEndpoint(
                                 "update_channel",
                                 getWorkspace(),
+                                env = "live",
                                 profile = getIdentity(),
+                                newId = null,
                                 version = FynoCore.getString("VERSION")
                             )
                             val requestBody = JSONObject().apply {
@@ -72,14 +78,16 @@ object FynoUser {
     }
 
     private fun updateInapp(token: String, integrationId: String){
-        if (getWorkspace().isNotEmpty()) {
+        if (getIdentity().isNotEmpty() && getWorkspace().isNotEmpty()) {
             runBlocking {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val endpoint = FynoUtils().getEndpoint(
                             "update_channel",
                             getWorkspace(),
+                            env = "live",
                             profile = token,
+                            newId = null,
                             version = FynoCore.getString("VERSION")
                         )
                         val requestBody = JSONObject().apply {
@@ -117,7 +125,9 @@ object FynoUser {
                         val endpoint = FynoUtils().getEndpoint(
                             "update_channel",
                             getWorkspace(),
+                            env = "live",
                             profile = getIdentity(),
+                            newId = null,
                             version = FynoCore.getString("VERSION")
                         )
                         val requestBody = JSONObject().apply {

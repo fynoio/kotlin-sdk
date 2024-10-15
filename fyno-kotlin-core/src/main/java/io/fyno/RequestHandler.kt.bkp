@@ -303,7 +303,7 @@ object RequestHandler {
                 }
             }
         } catch (e: Exception) {
-            Logger.w(TAG, "requestPost: Failed to send request - ${e.stackTrace}")
+            Log.w(TAG, e.stackTrace)
             Log.e(TAG, "requestPOST: ",e )
         }
     }

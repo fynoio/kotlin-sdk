@@ -11,9 +11,11 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import io.fyno.core.FynoUser
+import io.fyno.core.utils.Logger
 
 class GetPermissions : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         askNotificationPermission()
         FynoUser.getFcmToken()?.let {
             FynoUser.setFcmToken(it)
@@ -28,10 +30,10 @@ class GetPermissions : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            Log.d("PermissionDialog", "Notifications permission granted")
+            Logger.d("PermissionDialog", "Notifications permission granted")
             updateUserPermissionStatus(true)
         } else {
-            Log.d("PermissionDialog", "Can't post notifications without POST_NOTIFICATIONS permission")
+            Logger.d("PermissionDialog", "Can't post notifications without POST_NOTIFICATIONS permission")
         }
     }
 

@@ -26,6 +26,6 @@ object FynoContextCreator {
     }
 
     fun isInitialized(): Boolean {
-        return contextRef?.get() != null
+        return (contextRef?.get() != null && _sqlDataHelper != null)
     }
 }

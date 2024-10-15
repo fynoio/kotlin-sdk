@@ -74,7 +74,7 @@ object RequestHandler {
                     }
                 }
             }
-            Log.i(TAG, "doRequestAsync: request started for $url")
+            Logger.i(TAG, "doRequestAsync: request started for $url")
             conn.setRequestProperties()
             conn.readTimeout = TIMEOUT
             conn.connectTimeout = TIMEOUT
@@ -91,7 +91,7 @@ object RequestHandler {
             }
 
             val responseCode = conn.responseCode
-            Log.i(TAG, "doRequestAsync: Request finished with code : $responseCode")
+            Logger.i(TAG, "doRequestAsync: Request finished with code : $responseCode")
             when (responseCode) {
                 in 200..299 -> {
                     if (url.path.matches(mergeRegex)) {
@@ -113,6 +113,10 @@ object RequestHandler {
                     true
                 }
                 in 400..499 -> {
+                    if(responseCode == 404) {
+                        conn.disconnect()
+                        return@withContext false
+                    }
                     val inputStream = conn.errorStream
                     val response = inputStream.bufferedReader().use(BufferedReader::readText)
                     val jsonResponse = JSONObject(response)
@@ -380,7 +384,7 @@ object RequestHandler {
             }
         } catch (e: Exception) {
             Logger.w(TAG, "requestPost: Failed to send request - ${e.stackTrace}")
-            Log.e(TAG, "requestPOST: ",e )
+            Logger.e(TAG, "requestPOST: ${e.message}",e )
         }
     }
 

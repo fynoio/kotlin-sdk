@@ -474,7 +474,7 @@ intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString
                 return JSONObject()
             return JSONObject(this.replace("\\n","").replace("\\\\","\\"))
         } catch (e: Exception) {
-            Log.e(TAG, "toNotificationObject: Error while converting notification string to object", e );
+            Logger.e(TAG, "toNotificationObject: Error while converting notification string to object", e );
             JSONObject()
         }
     }

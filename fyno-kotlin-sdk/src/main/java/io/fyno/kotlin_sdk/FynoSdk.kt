@@ -52,6 +52,13 @@ public object FynoSdk {
         }
     }
 
+    fun registerInapp(integrationId: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            delay(5000)
+            FynoPush().registerInapp(integrationId)
+        }
+    }
+
     fun identify(uniqueId: String, userName: String? = null) {
         runBlocking {
             CoroutineScope(Dispatchers.IO).launch {

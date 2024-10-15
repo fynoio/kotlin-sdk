@@ -52,7 +52,9 @@ class FynoCore {
                             val endpoint = FynoUtils().getEndpoint(
                                 "create_profile",
                                 FynoUser.getWorkspace(),
+                                env = "live",
                                 profile = uuid,
+                                newId = null,
                                 version = getString("VERSION")
                             )
                             RequestHandler.requestPOST(
@@ -78,7 +80,9 @@ class FynoCore {
                                     val endpoint = FynoUtils().getEndpoint(
                                         "create_profile",
                                         FynoUser.getWorkspace(),
+                                        env = "live",
                                         profile = userId,
+                                        newId = null,
                                         version = getString("VERSION")
                                     )
                                     RequestHandler.requestPOST(
@@ -119,6 +123,7 @@ class FynoCore {
                             val mergeEndpoint = FynoUtils().getEndpoint(
                                 "merge_profile",
                                 FynoUser.getWorkspace(),
+                                env = "live",
                                 profile = oldDistinctId,
                                 newId = uniqueId,
                                 version = getString("VERSION")
@@ -133,7 +138,9 @@ class FynoCore {
                             val upsertEndpoint = FynoUtils().getEndpoint(
                                 "upsert_profile",
                                 FynoUser.getWorkspace(),
+                                env = "live",
                                 profile = uniqueId,
+                                newId = null,
                                 version = getString("VERSION")
                             )
                             RequestHandler.requestPOST(
@@ -154,7 +161,9 @@ class FynoCore {
             val upsertEndpoint = FynoUtils().getEndpoint(
                 "upsert_profile",
                 FynoUser.getWorkspace(),
+                env = "live",
                 profile = FynoUser.getIdentity(),
+                newId = null,
                 version = getString("VERSION")
             )
             runBlocking(Dispatchers.IO) {
@@ -227,7 +236,9 @@ class FynoCore {
                     val deleteEndpoint = FynoUtils().getEndpoint(
                         "delete_channel",
                         FynoUser.getWorkspace(),
+                        env = "live",
                         profile = FynoUser.getIdentity(),
+                        newId = null,
                         version = getString("VERSION")
                     )
                     RequestHandler.requestPOST(deleteEndpoint, deleteJson, "POST")
@@ -235,6 +246,9 @@ class FynoCore {
                     val createProfileEndpoint = FynoUtils().getEndpoint(
                         "create_profile",
                         FynoUser.getWorkspace(),
+                        env = "live",
+                        profile = null,
+                        newId = null,
                         version = getString("VERSION")
                     )
                     RequestHandler.requestPOST(createProfileEndpoint, jsonObject, "POST")
@@ -281,6 +295,7 @@ class FynoCore {
                         val mergeProfileEndpoint = FynoUtils().getEndpoint(
                             "merge_profile",
                             FynoUser.getWorkspace(),
+                            env = null,
                             profile = oldDistinctId,
                             newId = newDistinctId,
                             version = getString("VERSION")
