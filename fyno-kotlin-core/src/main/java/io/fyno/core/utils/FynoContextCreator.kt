@@ -11,7 +11,7 @@ object FynoContextCreator {
     val sqlDataHelper: SQLDataHelper
         get() {
             if (_sqlDataHelper == null) {
-                throw IllegalStateException("SQLDataHelper is accessed before initialization.")
+                Logger.w("FYNO_CONTEXT_CREATOR", "SQLDataHelper is accessed before initialization.")
             }
             return _sqlDataHelper!!
         }
