@@ -9,6 +9,7 @@ import io.fyno.callback.models.MessageStatus
 import io.fyno.core.FynoCore
 import io.fyno.core.utils.Logger
 import io.fyno.pushlibrary.FynoPush
+import io.fyno.pushlibrary.firebase.FcmHandlerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,7 +39,13 @@ open class NotificationClickActivity : Activity() {
             cintent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
                 ?.let {
                     launchintent.putExtra("io.fyno.pushlibrary.notification.payload", it)
-                    FynoPush().getPushNotificationCallback()?.onNotificationClicked(it)
+                    FcmHandlerService.getInstance()::fynoCallback.let { it1->
+                        try {
+                            FcmHandlerService.getInstance().fynoCallback.onNotificationClicked(it)
+                        } catch (e:Exception){
+                            Logger.w("FynoSDK", "Push events are not available")
+                        }
+                    }
                 }
             sendBroadcast(cintent)
             finish()

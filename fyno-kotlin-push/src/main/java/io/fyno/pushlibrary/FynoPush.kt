@@ -219,7 +219,7 @@ class FynoPush {
 
     fun setPushNotificationCallback(callback: FynoCallbacks) {
         this.pushCallbacks = callback
-        FynoPush().pushCallbacks = callback
+        FcmHandlerService().setNotificationCallbacks(callback)
     }
 
     fun getPushNotificationCallback(): FynoCallbacks? {

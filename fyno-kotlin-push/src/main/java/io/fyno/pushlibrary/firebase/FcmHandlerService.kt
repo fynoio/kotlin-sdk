@@ -15,7 +15,7 @@ import io.fyno.pushlibrary.helper.NotificationHelper.renderFCMMessage
 import java.lang.Exception
 
 open class FcmHandlerService : FirebaseMessagingService() {
-    internal lateinit var callback: FynoCallbacks;
+    lateinit var fynoCallback: FynoCallbacks;
 
     companion object {
         private var instance: FcmHandlerService? = null
@@ -29,8 +29,8 @@ open class FcmHandlerService : FirebaseMessagingService() {
         }
     }
 
-    fun setCallback(callback: FynoCallbacks) {
-        this.callback = callback
+    fun setNotificationCallbacks(callback: FynoCallbacks) {
+        getInstance().fynoCallback = callback
     }
 
     override fun onNewToken(token: String) {
@@ -64,8 +64,8 @@ open class FcmHandlerService : FirebaseMessagingService() {
                     super.onMessageReceived(message)
                 }
             }
-            if (getInstance()::callback.isInitialized)
-                getInstance().callback.onNotificationReceived(message)
+            if (getInstance()::fynoCallback.isInitialized)
+                getInstance().fynoCallback.onNotificationReceived(message)
         } catch (e:Exception) {
             Logger.e(TAG, e.message.toString(),e)
         }

@@ -9,11 +9,12 @@ import java.net.URL
 
 class JWTRequestHandler {
     internal fun fetchAndSetJWTToken(distinctID: String): String? {
+        lateinit var conn: HttpURLConnection;
         try {
             val urlString =
                 "${FynoConstants.PROD_ENDPOINT}/${FynoUser.getWorkspace()}/$distinctID/token"
             val url = URL(urlString)
-            val conn = url.openConnection() as HttpURLConnection
+            conn = url.openConnection() as HttpURLConnection
 
             conn.requestMethod = "GET"
             val responseCode = conn.responseCode
@@ -34,6 +35,7 @@ class JWTRequestHandler {
                 return null
             }
         } catch (e: Exception) {
+            conn.disconnect()
             Logger.w("JWTRequestHandler", "Error fetching JWT token", e)
             return null
         }

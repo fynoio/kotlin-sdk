@@ -30,7 +30,13 @@ class NotificationDismissedReceiver : BroadcastReceiver() {
             cintent.action = ACTION_DISMISSED_CLICK
             cintent.putExtra("io.fyno.pushlibrary.notification.action", "dismissed")
             cintent.component = null
-            FynoPush().getPushNotificationCallback()?.onNotificationDismissed(id.toString())
+            FcmHandlerService.getInstance()::fynoCallback.let {it1->
+                try {
+                    FcmHandlerService.getInstance().fynoCallback.onNotificationDismissed(id.toString())
+                } catch (e:Exception){
+                    Logger.w("FynoSDK", "Push events are not available")
+                }
+            }
             context.applicationContext.sendBroadcast(cintent)
         }catch (e:Exception){
             Logger.e("${FynoCore.TAG}-PushDismissed", e.message.toString(),e)
