@@ -29,7 +29,9 @@ open class FcmHandlerService : FirebaseMessagingService() {
         }
     }
 
-
+    fun setCallback(callback: FynoCallbacks) {
+        this.callback = callback
+    }
 
     override fun onNewToken(token: String) {
         Logger.d(TAG, "onNewToken: $token")
@@ -62,8 +64,8 @@ open class FcmHandlerService : FirebaseMessagingService() {
                     super.onMessageReceived(message)
                 }
             }
-            if (FynoPush().getPushNotificationCallback() != null)
-                FynoPush().getPushNotificationCallback()?.onNotificationReceived(message)
+            if (getInstance()::callback.isInitialized)
+                getInstance().callback.onNotificationReceived(message)
         } catch (e:Exception) {
             Logger.e(TAG, e.message.toString(),e)
         }
