@@ -7,6 +7,8 @@ import io.fyno.callback.FynoCallback
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.FynoCore
 import io.fyno.core.utils.Logger
+import io.fyno.pushlibrary.FynoPush
+import io.fyno.pushlibrary.firebase.FcmHandlerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,6 +19,7 @@ class NotificationDismissedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         try {
             val callback = intent.extras!!.getString("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.callback")
+            val id = intent.extras!!.getInt("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.notificationId")
             Logger.d("NotificationDismissed", "onReceive: $callback")
             if (callback != null) {
                 runBlocking(Dispatchers.IO) {
@@ -27,6 +30,7 @@ class NotificationDismissedReceiver : BroadcastReceiver() {
             cintent.action = ACTION_DISMISSED_CLICK
             cintent.putExtra("io.fyno.pushlibrary.notification.action", "dismissed")
             cintent.component = null
+            FynoPush().getPushNotificationCallback()?.onNotificationDismissed(id.toString())
             context.applicationContext.sendBroadcast(cintent)
         }catch (e:Exception){
             Logger.e("${FynoCore.TAG}-PushDismissed", e.message.toString(),e)

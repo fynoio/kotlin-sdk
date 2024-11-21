@@ -8,6 +8,7 @@ import io.fyno.callback.FynoCallback
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.FynoCore
 import io.fyno.core.utils.Logger
+import io.fyno.pushlibrary.FynoPush
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -35,9 +36,11 @@ open class NotificationClickActivity : Activity() {
             cintent.putExtra("io.fyno.pushlibrary.notification.intent", intent.toString())
             cintent.component = null
             cintent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
-                ?.let { launchintent.putExtra("io.fyno.pushlibrary.notification.payload", it) }
+                ?.let {
+                    launchintent.putExtra("io.fyno.pushlibrary.notification.payload", it)
+                    FynoPush().getPushNotificationCallback()?.onNotificationClicked(it)
+                }
             sendBroadcast(cintent)
-//            FynoPush.PushObject.handleNotificationClick(cintent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras"))
             finish()
         } catch (e:Exception) {
             Logger.e("${FynoCore.TAG}-NotificationClick",e.message.toString(),e)
