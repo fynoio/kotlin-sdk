@@ -56,13 +56,25 @@ object NotificationHelper {
     private fun createOnDismissedIntent(
         context: Context,
         notificationId: Int,
-        callbackUrl: String?
+        callbackUrl: String?,
+        extras: String?
     ): PendingIntent? {
         val intent = Intent(context, NotificationDismissedReceiver::class.java).apply {
-            putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.notificationId", notificationId)
-            callbackUrl?.let { putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.callback", it) }
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra(
+                "io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.notificationId",
+                notificationId
+            )
+            callbackUrl?.let {
+                putExtra(
+                    "io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.callback",
+                    it
+                )
+            }
+            extras?.let { putExtra("io.fyno.kotlin_sdk.notificationDismissedReceiver.extras", extras) }
+            flags =
+                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
+
         return intent.let {
             PendingIntent.getBroadcast(
                 context,
@@ -82,7 +94,7 @@ object NotificationHelper {
         val intent = Intent(context, NotificationClickActivity::class.java)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.notificationId", notificationId)
         intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.callback", callbackUrl)
-intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras)
+        intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         if(action.isNullOrEmpty()){
             intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationClickedReceiver.action", context.packageManager.getLaunchIntentForPackage(context.packageName)?.component?.className.toString())
@@ -121,6 +133,7 @@ intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString
         this ?: return RawMessage("1", "1")
 
         val notificationPayloadJO = toNotificationObject()
+        Log.d(TAG, "${notificationPayloadJO}")
 
 
         val id = notificationPayloadJO.safeString("id") ?: ""
@@ -217,6 +230,14 @@ intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString
                 notification.callback?.let { FynoCallback().updateStatus(context, it, MessageStatus.OPT_OUT) }
                 return
             }
+
+            val cintent = Intent()
+            cintent.action = "io.fyno.pushlibrary.NOTIFICATION_ACTION"
+            cintent.putExtra("io.fyno.pushlibrary.notification.action", "received")
+            notification.additional_data?.let {
+                cintent.putExtra("io.fyno.pushlibrary.notification.payload", notification.additional_data)
+            }
+            context.applicationContext.sendBroadcast(cintent)
 
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -356,7 +377,7 @@ intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString
             try {
                 notification.callback?.let {
                     builder.setContentIntent(createOnClickIntent(context, id, it, notification.action, notificationModel.additional_data))
-                    builder.setDeleteIntent(createOnDismissedIntent(context, id, it))
+                    builder.setDeleteIntent(createOnDismissedIntent(context, id, it, notification.additional_data))
                 }
             } catch (e: Exception) {
                 Logger.d("notification", "setBasicVo", e)

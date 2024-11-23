@@ -20,6 +20,7 @@ class NotificationDismissedReceiver : BroadcastReceiver() {
         try {
             val callback = intent.extras!!.getString("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.callback")
             val id = intent.extras!!.getInt("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.notificationId")
+            val payload = intent.extras!!.getString("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.extras")
             Logger.d("NotificationDismissed", "onReceive: $callback")
             if (callback != null) {
                 runBlocking(Dispatchers.IO) {
@@ -29,10 +30,12 @@ class NotificationDismissedReceiver : BroadcastReceiver() {
             val cintent = Intent()
             cintent.action = ACTION_DISMISSED_CLICK
             cintent.putExtra("io.fyno.pushlibrary.notification.action", "dismissed")
-            cintent.component = null
+            cintent.putExtra("io.fyno.pushlibrary.notification.payload", payload)
             FcmHandlerService.getInstance()::fynoCallback.let {it1->
                 try {
-                    FcmHandlerService.getInstance().fynoCallback.onNotificationDismissed(id.toString())
+                    if (payload != null) {
+                        FcmHandlerService.getInstance().fynoCallback.onNotificationDismissed(payload)
+                    }
                 } catch (e:Exception){
                     Logger.w("FynoSDK", "Push events are not available")
                 }

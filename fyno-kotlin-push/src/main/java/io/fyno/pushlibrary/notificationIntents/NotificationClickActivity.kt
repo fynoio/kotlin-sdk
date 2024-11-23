@@ -25,7 +25,6 @@ open class NotificationClickActivity : Activity() {
             Logger.d("NotificationClick", "onCreate: ")
             super.onCreate(savedInstanceState)
             val launchintent = handleNotificationClick()
-//            launchintent.action = ACTION_NOTIFICATION_CLICK
             launchintent.putExtra("io.fyno.pushlibrary.notification.action", "clicked")
             launchintent.putExtra("io.fyno.pushlibrary.notification.intent", intent.toString())
             intent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
@@ -35,10 +34,9 @@ open class NotificationClickActivity : Activity() {
             cintent.action = ACTION_NOTIFICATION_CLICK
             cintent.putExtra("io.fyno.pushlibrary.notification.action", "clicked")
             cintent.putExtra("io.fyno.pushlibrary.notification.intent", intent.toString())
-            cintent.component = null
-            cintent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
+            launchintent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
                 ?.let {
-                    launchintent.putExtra("io.fyno.pushlibrary.notification.payload", it)
+                    cintent.putExtra("io.fyno.pushlibrary.notification.payload", it)
                     FcmHandlerService.getInstance()::fynoCallback.let { it1->
                         try {
                             FcmHandlerService.getInstance().fynoCallback.onNotificationClicked(it)
