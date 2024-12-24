@@ -30,7 +30,30 @@ import java.util.concurrent.Delayed
 class FynoPush {
     private lateinit var pushCallbacks: FynoCallbacks
 
-    fun showPermissionDialog(delay: Long = 0) {
+    fun showPermissionDialog(appContext: Context, delay: Long = 0) {
+        Log.i(FynoCore.TAG, "showPermissionDialog: Im triggered")
+        if (Build.VERSION.SDK_INT <= 24)
+            return
+        CoroutineScope(Dispatchers.IO).launch {
+            delay(delay)
+            if(!FynoContextCreator.isInitialized()){
+                Logger.w(FcmHandlerService.TAG, "Fyno SDK is not initialized")
+                return@launch
+            }
+            val intent = Intent(appContext, GetPermissions::class.java)
+            val mNotificationManager =
+                appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (!mNotificationManager.areNotificationsEnabled())
+                appContext.startActivity(intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK))
+            Logger.i(FcmHandlerService.TAG, "Notification Permissions are allowed")
+            if(FynoContextCreator.isInitialized())
+                FynoUser.getFcmToken()?.let { FynoUser.setFcmToken(it) }
+            else
+                Logger.w(FcmHandlerService.TAG, "Fyno SDK is not initialized")
+        }
+    }
+
+    fun showPermissionDialogOld(delay: Long = 0) {
         Log.i(FynoCore.TAG, "showPermissionDialog: Im triggered")
         if (Build.VERSION.SDK_INT <= 24)
             return
@@ -42,7 +65,10 @@ class FynoPush {
             if (!mNotificationManager.areNotificationsEnabled())
                 FynoCore.appContext.startActivity(intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK))
             Logger.i(FcmHandlerService.TAG, "Notification Permissions are allowed")
-            FynoUser.getFcmToken()?.let { FynoUser.setFcmToken(it) }
+            if(FynoContextCreator.isInitialized())
+                FynoUser.getFcmToken()?.let { FynoUser.setFcmToken(it) }
+            else
+                Logger.w(FcmHandlerService.TAG, "Fyno SDK is not initialized")
         }
     }
 

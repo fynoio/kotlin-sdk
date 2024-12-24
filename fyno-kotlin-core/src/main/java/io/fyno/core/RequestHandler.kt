@@ -96,7 +96,7 @@ object RequestHandler {
                 in 200..299 -> {
                     if (url.path.matches(mergeRegex)) {
                         mergeRegex.find(url.path)?.groups?.get(2)?.value?.let {
-                            val token = async { JWTRequestHandler().fetchAndSetJWTToken(it) }.await()
+                            val token = async { JWTRequestHandler().fetchAndSetJWTToken(it.split("?")[0]) }.await()
                             if (token.isNullOrEmpty()) {
                                 Logger.w(TAG,"JWT token fetch failed");
                                 return@withContext false
@@ -108,7 +108,7 @@ object RequestHandler {
                         conn.disconnect()
                         return@withContext true
                     }
-                    FynoContextCreator.sqlDataHelper.deleteRequestByID(id, "requests")
+                    FynoContextCreator.sqlDataHelper?.deleteRequestByID(id, "requests")
                     conn.disconnect()
                     true
                 }
@@ -134,8 +134,8 @@ object RequestHandler {
                         conn.disconnect()
                         return@withContext true
                     }
-                    FynoContextCreator.sqlDataHelper.deleteRequestByID(id, "requests")
-                    Logger.w(TAG, "doRequestAsync: Request failed: $message")
+                    FynoContextCreator.sqlDataHelper?.deleteRequestByID(id, "requests")
+                    Logger.w(TAG, "doRequestAsync: Request failed: $response")
                     conn.disconnect()
                     true
                 }
@@ -170,55 +170,57 @@ object RequestHandler {
                 try {
                     while (true) {
                         if (cursor != null && !cursor.isClosed) cursor.close()
-                        cursor = FynoContextCreator.sqlDataHelper.getNextRequest("requests")
-                        if (cursor.moveToNext()) {
-                            val url =
-                                cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_URL))
-                            val postDataStr =
-                                cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_POST_DATA))
-                            val postData =
-                                if (postDataStr != null) JSONObject(postDataStr) else null
-                            val method =
-                                cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_METHOD))
-                            val id = cursor.getInt(cursor.getColumnIndex(SQLDataHelper.COLUMN_ID))
-                            val lastProcessedTimeMillis =
-                                cursor.getLong(cursor.getColumnIndex(SQLDataHelper.COLUMN_LAST_PROCESSED_AT))
-                            req_id = id
-                            val timeDifference =
-                                System.currentTimeMillis() - lastProcessedTimeMillis
+                        cursor = FynoContextCreator.sqlDataHelper?.getNextRequest("requests")
+                        if (cursor != null) {
+                            if (cursor.moveToNext()) {
+                                val url =
+                                    cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_URL))
+                                val postDataStr =
+                                    cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_POST_DATA))
+                                val postData =
+                                    if (postDataStr != null) JSONObject(postDataStr) else null
+                                val method =
+                                    cursor.getString(cursor.getColumnIndex(SQLDataHelper.COLUMN_METHOD))
+                                val id = cursor.getInt(cursor.getColumnIndex(SQLDataHelper.COLUMN_ID))
+                                val lastProcessedTimeMillis =
+                                    cursor.getLong(cursor.getColumnIndex(SQLDataHelper.COLUMN_LAST_PROCESSED_AT))
+                                req_id = id
+                                val timeDifference =
+                                    System.currentTimeMillis() - lastProcessedTimeMillis
 
-                            if (caller != "requestPOST" && timeDifference < 2000) {
+                                if (caller != "requestPOST" && timeDifference < 2000) {
+                                    cursor.close()
+                                    continue
+                                }
                                 cursor.close()
-                                continue
-                            }
-                            cursor.close()
 
-                            FynoContextCreator.sqlDataHelper.updateStatusAndLastProcessedTime(
-                                id,
-                                "requests",
-                                "processing"
-                            )
-
-                            val request = Request(url, postData, method)
-                            val success = async { handleRetries(request, id) }.await();
-                            if (success) {
-                                FynoContextCreator.sqlDataHelper.deleteRequestByID(id, "requests")
-                            } else {
-                                FynoContextCreator.sqlDataHelper.updateStatusAndLastProcessedTime(
+                                FynoContextCreator.sqlDataHelper?.updateStatusAndLastProcessedTime(
                                     id,
                                     "requests",
-                                    "not_processed"
+                                    "processing"
                                 )
-                                break;
+
+                                val request = Request(url, postData, method)
+                                val success = async { handleRetries(request, id) }.await();
+                                if (success) {
+                                    FynoContextCreator.sqlDataHelper?.deleteRequestByID(id, "requests")
+                                } else {
+                                    FynoContextCreator.sqlDataHelper?.updateStatusAndLastProcessedTime(
+                                        id,
+                                        "requests",
+                                        "not_processed"
+                                    )
+                                    break;
+                                }
+                            } else {
+                                break
                             }
-                        } else {
-                            break
                         }
                     }
                 } catch (e: Exception) {
                     Logger.w(TAG, "Unable to process the request")
                     req_id.let {
-                        FynoContextCreator.sqlDataHelper.updateStatusAndLastProcessedTime(
+                        FynoContextCreator.sqlDataHelper?.updateStatusAndLastProcessedTime(
                             req_id,
                             "requests",
                             "not_processed"
@@ -423,7 +425,7 @@ object RequestHandler {
     // Function to save requests to SQLite database
     private fun saveRequestToDb(request: Request, id:Int? = 0) {
         Logger.i(TAG, "saveRequestToDb: Saving request to db with url: ${request.url}")
-        FynoContextCreator.sqlDataHelper.insertRequest(request, "requests", id)
+        FynoContextCreator.sqlDataHelper?.insertRequest(request, "requests", id)
     }
 
     // Function to save CB requests to SQLite database

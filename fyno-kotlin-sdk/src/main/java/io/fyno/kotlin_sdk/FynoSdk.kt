@@ -13,6 +13,7 @@ import io.fyno.pushlibrary.models.PushRegion
 //import io.sentry.protocol.User
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -87,6 +88,14 @@ public object FynoSdk {
         runBlocking {
             CoroutineScope(Dispatchers.IO).launch {
                 FynoCore.mergeProfile(oldDistinctId, newDistinctId)
+            }
+        }
+    }
+
+    fun updateName(name: String){
+        runBlocking {
+            CoroutineScope(Dispatchers.IO).launch {
+                FynoCore.updateName(name);
             }
         }
     }

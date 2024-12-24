@@ -70,7 +70,7 @@ object NotificationHelper {
                     it
                 )
             }
-            extras?.let { putExtra("io.fyno.kotlin_sdk.notificationDismissedReceiver.extras", extras) }
+            extras?.let { putExtra("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.extras", extras) }
             flags =
                 Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
@@ -491,11 +491,31 @@ intent.putExtra("io.fyno.kotlin_sdk.notificationIntents.extras", extras.toString
 
     private fun String?.toNotificationObject(): JSONObject {
         return try {
-            if (isNullOrBlank())
+            if (isNullOrBlank()) {
+                Logger.w(TAG, "toNotificationObject: Input string is null or blank")
                 return JSONObject()
-            return JSONObject(this.replace("\\n","").replace("\\\\","\\"))
+            }
+
+            // Clean up unnecessary escape characters
+            val cleanedString = this.replace("\\n", "")
+
+            // Convert to JSONObject
+            val jsonObject = JSONObject(cleanedString)
+
+            // Handle nested `additional_data` field if present
+            if (jsonObject.has("additional_data")) {
+                val additionalDataString = jsonObject.getString("additional_data")
+                try {
+                    val additionalDataJson = JSONObject(additionalDataString)
+                    jsonObject.put("additional_data", additionalDataJson) // Replace string with JSON object
+                } catch (e: Exception) {
+                    Logger.w(TAG, "toNotificationObject: Failed to parse nested additional_data JSON", e)
+                }
+            }
+
+            jsonObject
         } catch (e: Exception) {
-            Logger.e(TAG, "toNotificationObject: Error while converting notification string to object", e );
+            Logger.e(TAG, "toNotificationObject: Error while converting notification string to JSON object", e)
             JSONObject()
         }
     }
