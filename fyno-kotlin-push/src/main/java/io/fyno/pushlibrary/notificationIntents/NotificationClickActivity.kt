@@ -8,6 +8,8 @@ import io.fyno.callback.FynoCallback
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.FynoCore
 import io.fyno.core.utils.Logger
+import io.fyno.pushlibrary.FynoPush
+import io.fyno.pushlibrary.firebase.FcmHandlerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,7 +25,6 @@ open class NotificationClickActivity : Activity() {
             Logger.d("NotificationClick", "onCreate: ")
             super.onCreate(savedInstanceState)
             val launchintent = handleNotificationClick()
-//            launchintent.action = ACTION_NOTIFICATION_CLICK
             launchintent.putExtra("io.fyno.pushlibrary.notification.action", "clicked")
             launchintent.putExtra("io.fyno.pushlibrary.notification.intent", intent.toString())
             intent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
@@ -33,11 +34,18 @@ open class NotificationClickActivity : Activity() {
             cintent.action = ACTION_NOTIFICATION_CLICK
             cintent.putExtra("io.fyno.pushlibrary.notification.action", "clicked")
             cintent.putExtra("io.fyno.pushlibrary.notification.intent", intent.toString())
-            cintent.component = null
-            cintent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
-                ?.let { launchintent.putExtra("io.fyno.pushlibrary.notification.payload", it) }
+            launchintent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
+                ?.let {
+                    cintent.putExtra("io.fyno.pushlibrary.notification.payload", it)
+                    FcmHandlerService.getInstance()::fynoCallback.let { it1->
+                        try {
+                            FcmHandlerService.getInstance().fynoCallback.onNotificationClicked(it)
+                        } catch (e:Exception){
+                            Logger.w("FynoSDK", "Push events are not available")
+                        }
+                    }
+                }
             sendBroadcast(cintent)
-//            FynoPush.PushObject.handleNotificationClick(cintent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras"))
             finish()
         } catch (e:Exception) {
             Logger.e("${FynoCore.TAG}-NotificationClick",e.message.toString(),e)

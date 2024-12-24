@@ -7,6 +7,8 @@ import io.fyno.callback.FynoCallback
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.FynoCore
 import io.fyno.core.utils.Logger
+import io.fyno.pushlibrary.FynoPush
+import io.fyno.pushlibrary.firebase.FcmHandlerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,6 +19,8 @@ class NotificationDismissedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         try {
             val callback = intent.extras!!.getString("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.callback")
+            val id = intent.extras!!.getInt("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.notificationId")
+            val payload = intent.extras!!.getString("io.fyno.kotlin_sdk.notificationIntents.notificationDismissedReceiver.extras")
             Logger.d("NotificationDismissed", "onReceive: $callback")
             if (callback != null) {
                 runBlocking(Dispatchers.IO) {
@@ -26,7 +30,16 @@ class NotificationDismissedReceiver : BroadcastReceiver() {
             val cintent = Intent()
             cintent.action = ACTION_DISMISSED_CLICK
             cintent.putExtra("io.fyno.pushlibrary.notification.action", "dismissed")
-            cintent.component = null
+            cintent.putExtra("io.fyno.pushlibrary.notification.payload", payload)
+            FcmHandlerService.getInstance()::fynoCallback.let {it1->
+                try {
+                    if (payload != null) {
+                        FcmHandlerService.getInstance().fynoCallback.onNotificationDismissed(payload)
+                    }
+                } catch (e:Exception){
+                    Logger.w("FynoSDK", "Push events are not available")
+                }
+            }
             context.applicationContext.sendBroadcast(cintent)
         }catch (e:Exception){
             Logger.e("${FynoCore.TAG}-PushDismissed", e.message.toString(),e)

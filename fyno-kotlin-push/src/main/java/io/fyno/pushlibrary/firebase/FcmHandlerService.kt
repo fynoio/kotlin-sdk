@@ -7,22 +7,30 @@ import io.fyno.callback.models.MessageStatus
 import io.fyno.core.FynoUser
 import io.fyno.core.utils.FynoContextCreator
 import io.fyno.core.utils.Logger
+import io.fyno.pushlibrary.FynoCallbacks
 import io.fyno.pushlibrary.FynoPush
 import io.fyno.pushlibrary.helper.NotificationHelper.isFynoMessage
 import io.fyno.pushlibrary.helper.NotificationHelper.rawMessage
 import io.fyno.pushlibrary.helper.NotificationHelper.renderFCMMessage
 import java.lang.Exception
 
-interface FynoPNCallback {
-        fun onNotificationReceived(message: RemoteMessage)
-        fun onNotificationClicked(message: RemoteMessage)
-        fun onNotificationDismissed(message: RemoteMessage)
-}
 open class FcmHandlerService : FirebaseMessagingService() {
-    private var callback: FynoPNCallback? = null
+    lateinit var fynoCallback: FynoCallbacks;
 
-    fun setCallback(param: FynoPNCallback) {
-        callback = param
+    companion object {
+        private var instance: FcmHandlerService? = null
+        const val TAG = "FYNO_FCM"
+
+        fun getInstance(): FcmHandlerService {
+            if (instance == null) {
+                instance = FcmHandlerService()
+            }
+            return instance!!
+        }
+    }
+
+    fun setNotificationCallbacks(callback: FynoCallbacks) {
+        getInstance().fynoCallback = callback
     }
 
     override fun onNewToken(token: String) {
@@ -37,26 +45,29 @@ open class FcmHandlerService : FirebaseMessagingService() {
             Logger.d(TAG, "onMessageReceived: ${message.rawData}")
             when {
                 message.isFynoMessage() -> {
-                    val context = if(FynoContextCreator.isInitialized())FynoContextCreator.getContext() else this.applicationContext
+                    val context =
+                        if (FynoContextCreator.isInitialized()) FynoContextCreator.getContext() else this
                     if (context != null) {
                         renderFCMMessage(context, message.rawMessage())
                     }
                 }
+
                 else -> {
                     val callback = message.data["callback"]
                     if (!callback.isNullOrEmpty()) {
-                        FynoCallback().updateStatus(this.applicationContext, callback, MessageStatus.RECEIVED)
+                        FynoCallback().updateStatus(
+                            this.applicationContext,
+                            callback,
+                            MessageStatus.RECEIVED
+                        )
                     }
                     super.onMessageReceived(message)
                 }
             }
-            callback?.onNotificationReceived(message)
+            if (getInstance()::fynoCallback.isInitialized)
+                getInstance().fynoCallback.onNotificationReceived(message)
         } catch (e:Exception) {
             Logger.e(TAG, e.message.toString(),e)
         }
-    }
-
-    companion object {
-        const val TAG = "FYNO_FCM"
     }
 }

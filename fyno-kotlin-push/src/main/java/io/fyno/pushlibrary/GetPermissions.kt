@@ -17,13 +17,6 @@ class GetPermissions : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         askNotificationPermission()
-        FynoUser.getFcmToken()?.let {
-            FynoUser.setFcmToken(it)
-        }
-        FynoUser.getMiToken()?.let {
-            FynoUser.setMiToken(it)
-        }
-        finish()
     }
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -32,8 +25,10 @@ class GetPermissions : AppCompatActivity() {
         if (isGranted) {
             Logger.d("PermissionDialog", "Notifications permission granted")
             updateUserPermissionStatus(true)
+            finish()
         } else {
             Logger.d("PermissionDialog", "Can't post notifications without POST_NOTIFICATIONS permission")
+            finish()
         }
     }
 

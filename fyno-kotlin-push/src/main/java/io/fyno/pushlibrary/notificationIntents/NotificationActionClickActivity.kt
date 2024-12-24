@@ -11,6 +11,8 @@ import io.fyno.callback.FynoCallback
 import io.fyno.core.FynoCore
 import io.fyno.callback.models.MessageStatus
 import io.fyno.core.utils.Logger
+import io.fyno.pushlibrary.FynoPush
+import io.fyno.pushlibrary.firebase.FcmHandlerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,13 +30,33 @@ class NotificationActionClickActivity : AppCompatActivity() {
             super.onCreate(savedInstanceState)
             val launchintent = handleActionClick()
             intent.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
-                ?.let { launchintent?.putExtra("io.fyno.pushlibrary.notification.payload", it) }
+                ?.let {
+                    launchintent?.putExtra("io.fyno.pushlibrary.notification.payload", it)
+                    FcmHandlerService.getInstance()::fynoCallback.let {it1->
+                        try {
+                            FcmHandlerService.getInstance().fynoCallback.onNotificationClicked(it)
+                        } catch (e: java.lang.Exception){
+                            Logger.w("FynoSDK", "Push events are not available")
+                        }
+                    }
+                }
             startActivity(launchintent)
             val cintent = Intent()
             cintent.action = ACTION_NOTIFICATIONACTION_CLICK
             cintent.putExtra("io.fyno.pushlibrary.notification.action", "action_clicked")
             cintent.putExtra("io.fyno.pushlibrary.notification.intent", intent.toString())
-            cintent.component = null
+
+            launchintent?.getStringExtra("io.fyno.kotlin_sdk.notificationIntents.extras")
+                ?.let {
+                    cintent.putExtra("io.fyno.pushlibrary.notification.payload", it)
+                    FcmHandlerService.getInstance()::fynoCallback.let { it1->
+                        try {
+                            FcmHandlerService.getInstance().fynoCallback.onNotificationClicked(it)
+                        } catch (e: java.lang.Exception){
+                            Logger.w("FynoSDK", "Push events are not available")
+                        }
+                    }
+                }
             sendBroadcast(cintent)
             finish()
         }catch(e:Exception) {
