@@ -11,22 +11,24 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import io.fyno.core.FynoUser
+import io.fyno.core.utils.Logger
 
-internal class GetPermissions : AppCompatActivity() {
+class GetPermissions : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        askNotificationPermission()
         super.onCreate(savedInstanceState)
-        finish()
+        askNotificationPermission()
     }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            Log.d("PermissionDialog", "Notifications permission granted")
+            Logger.d("PermissionDialog", "Notifications permission granted")
             updateUserPermissionStatus(true)
+            finish()
         } else {
-            Log.d("PermissionDialog", "Can't post notifications without POST_NOTIFICATIONS permission")
+            Logger.d("PermissionDialog", "Can't post notifications without POST_NOTIFICATIONS permission")
+            finish()
         }
     }
 

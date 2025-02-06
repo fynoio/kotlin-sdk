@@ -51,8 +51,8 @@ object NetworkDetails {
         return result
     }
     fun getNetworkType(): NetworkType {
-        val context = FynoContextCreator.context
-        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val context = FynoContextCreator.getContext()
+        val cm = context?.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val currentNetwork = getConnectionType(context)
 //        val capabilities = cm.getNetworkCapabilities(currentNetwork)
 //        val linkProperties = cm.getLinkProperties(currentNetwork)

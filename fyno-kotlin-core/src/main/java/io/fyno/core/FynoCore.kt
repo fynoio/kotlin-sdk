@@ -1,22 +1,25 @@
 package io.fyno.core
 
-import android.content.*
+//import io.sentry.Sentry
+//import io.sentry.protocol.User
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.SharedPreferences
+import android.os.Build
 import androidx.core.app.NotificationManagerCompat
-import io.fyno.core.helpers.SQLDataHelper
+import io.fyno.core.helpers.Config
 import io.fyno.core.utils.FynoContextCreator
 import io.fyno.core.utils.FynoUtils
 import io.fyno.core.utils.LogLevel
 import io.fyno.core.utils.Logger
 import io.fyno.core.utils.NetworkDetails
-//import io.sentry.Sentry
-//import io.sentry.protocol.User
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.*
+import java.util.UUID
 
 
 class FynoCore {
@@ -25,15 +28,14 @@ class FynoCore {
         lateinit var appContext: Context
         private lateinit var fynoPreferences: SharedPreferences
 
-        fun initialize(context: Context, wsid: String, integration: String, version: String = "live") {
+        fun initialize(context: Context, wsid: String, integration: String, version: String = "live", userId: String? = null) {
             require(wsid.isNotEmpty()) { "Workspace Id is empty" }
 
-            val sqlDataHelper = SQLDataHelper(context)
-            sqlDataHelper.updateAllRequestsToNotProcessed()
             appContext = context
-            FynoContextCreator.context = appContext
+            FynoContextCreator.setContext(appContext);
             NetworkDetails.getNetworkType()
             ConnectionStateMonitor().enable(context)
+            FynoContextCreator.sqlDataHelper?.updateAllRequestsToNotProcessed()
 
             fynoPreferences = context.getSharedPreferences(
                 "${context.packageName}-fynoio",
@@ -42,19 +44,28 @@ class FynoCore {
 
             setString("WS_ID", wsid)
             setString("VERSION", version)
+            val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            val appVersion = pInfo.versionName
+            setString("appVersionName", appVersion)
+            setString("appPackageName", pInfo.packageName.toString())
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                setString("appVersion", pInfo.longVersionCode.toString())
+            }
             FynoUser.setFynoIntegration(integration)
             FynoUser.setWorkspace(wsid)
 
-            if (FynoUser.getIdentity().isEmpty()) {
+            if (FynoUser.getIdentity().isEmpty() && userId.isNullOrBlank()) {
                 val uuid = UUID.randomUUID().toString()
                 try {
                     runBlocking {
                         CoroutineScope(Dispatchers.IO).launch {
-                            JWTRequestHandler().fetchAndSetJWTToken(uuid)
+//                            JWTRequestHandler().fetchAndSetJWTToken(uuid)
                             val endpoint = FynoUtils().getEndpoint(
                                 "create_profile",
                                 FynoUser.getWorkspace(),
+                                env = "live",
                                 profile = uuid,
+                                newId = null,
                                 version = getString("VERSION")
                             )
                             RequestHandler.requestPOST(
@@ -62,12 +73,44 @@ class FynoCore {
                                 JSONObject().put("distinct_id", uuid),
                                 "POST"
                             )
-                            identify(uuid)
+                            identify(uuid, update = false)
                             setFlag("isDirty", true)
                         }
                     }
                 } catch (e: Exception) {
                     Logger.e(TAG, "In Exception initialize: ${e.message}", e)
+                }
+            } else {
+                if (FynoUser.getIdentity() == userId) return
+                if (FynoUser.getIdentity().isEmpty()) {
+                    userId?.let {
+                        try {
+                            runBlocking {
+                                CoroutineScope(Dispatchers.IO).launch {
+//                                    JWTRequestHandler().fetchAndSetJWTToken(userId)
+                                    val endpoint = FynoUtils().getEndpoint(
+                                        "create_profile",
+                                        FynoUser.getWorkspace(),
+                                        env = "live",
+                                        profile = userId,
+                                        newId = null,
+                                        version = getString("VERSION")
+                                    )
+                                    RequestHandler.requestPOST(
+                                        endpoint,
+                                        JSONObject().put("distinct_id", userId),
+                                        "POST"
+                                    )
+                                    identify(userId, update = false)
+                                    setFlag("isDirty", true)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Logger.e(TAG, "In Exception initialize: ${e.message}", e)
+                        }
+                    }
+                } else {
+                    userId?.takeIf { it.isNotEmpty() }?.let { identify(it, update = true) }
                 }
             }
         }
@@ -77,29 +120,34 @@ class FynoCore {
                 Logger.d(TAG, "Fyno context not initialized - identify rejected/failed")
                 return
             }
-            val oldDistinctId = FynoUser.getIdentity()
-            if (oldDistinctId == uniqueId) {
-                updateName(name)
+            if(uniqueId.isEmpty()){
+                Logger.d(TAG, "Distinct ID can not be empty - ignoring identify call")
                 return
             }
+            val oldDistinctId = FynoUser.getIdentity()
             if (update) {
                 runBlocking {
                     CoroutineScope(Dispatchers.IO).launch {
+                        if (oldDistinctId == uniqueId) {
+                            return@launch
+                        }
                         if (oldDistinctId.isNotBlank()) {
                             val mergeEndpoint = FynoUtils().getEndpoint(
                                 "merge_profile",
                                 FynoUser.getWorkspace(),
+                                env = "live",
                                 profile = oldDistinctId,
                                 newId = uniqueId,
                                 version = getString("VERSION")
                             )
                             RequestHandler.requestPOST(mergeEndpoint, null, "PATCH")
-                            JWTRequestHandler().fetchAndSetJWTToken(uniqueId)
                         } else {
                             val upsertEndpoint = FynoUtils().getEndpoint(
                                 "upsert_profile",
                                 FynoUser.getWorkspace(),
+                                env = "live",
                                 profile = uniqueId,
+                                newId = null,
                                 version = getString("VERSION")
                             )
                             RequestHandler.requestPOST(
@@ -108,35 +156,46 @@ class FynoCore {
                                 "PUT"
                             )
                         }
+                        FynoUser.identify(uniqueId)
+                        updateName(name)
                     }
                 }
-            }
-            FynoUser.identify(uniqueId)
+            } else
+                FynoUser.identify(uniqueId)
         }
-        private fun updateName(name: String?) {
-            if(name.isNullOrEmpty()){
+         fun updateName(name: String?) {
+             if (!FynoContextCreator.isInitialized()) {
+                 Logger.d(TAG, "Fyno context not initialized - update name failed")
+                 return
+             }
+             if(FynoUser.getIdentity().isEmpty()){
+                 Logger.d(TAG, "Fyno distinct id is not set - update name failed")
+                 return
+             }
+             if(name?.trim()?.isEmpty() == true){
                 return
             }
+            if(FynoUser.getUserName() === name) return
             val upsertEndpoint = FynoUtils().getEndpoint(
                 "upsert_profile",
                 FynoUser.getWorkspace(),
+                env = "live",
                 profile = FynoUser.getIdentity(),
+                newId = null,
                 version = getString("VERSION")
             )
             runBlocking(Dispatchers.IO) {
                 RequestHandler.requestPOST(upsertEndpoint, getParamsObj(FynoUser.getIdentity(), name), "PUT")
+                if (name != null) {
+                    FynoUser.setUserName(name)
+                };
             }
         }
 
-        private fun getParamsObj(uniqueId: String, name: String? = null): JSONObject {
+        private fun getChannelParamsObj(uniqueId: String, name: String? = null){
             val jsonObject = JSONObject()
             val channelObj = JSONObject()
             val pushObj = JSONArray()
-
-            jsonObject.put("distinct_id", uniqueId)
-            if (!name.isNullOrEmpty()) {
-                jsonObject.put("name", name)
-            }
 
             val fcmToken = FynoUser.getFcmToken()
             val xiaomiToken = FynoUser.getMiToken()
@@ -155,6 +214,16 @@ class FynoCore {
                 channelObj.put("push", pushObj)
                 jsonObject.put("channel", channelObj)
             }
+        }
+
+        private fun getParamsObj(uniqueId: String, name: String? = null): JSONObject {
+            val jsonObject = JSONObject()
+
+            jsonObject.put("distinct_id", uniqueId)
+            if (!name.isNullOrEmpty()) {
+                jsonObject.put("name", name)
+            }
+
             return jsonObject
         }
 
@@ -193,18 +262,22 @@ class FynoCore {
                     val deleteEndpoint = FynoUtils().getEndpoint(
                         "delete_channel",
                         FynoUser.getWorkspace(),
+                        env = "live",
                         profile = FynoUser.getIdentity(),
+                        newId = null,
                         version = getString("VERSION")
                     )
                     RequestHandler.requestPOST(deleteEndpoint, deleteJson, "POST")
-                    JWTRequestHandler().fetchAndSetJWTToken(uuid)
+//                    JWTRequestHandler().fetchAndSetJWTToken(uuid)
                     val createProfileEndpoint = FynoUtils().getEndpoint(
                         "create_profile",
                         FynoUser.getWorkspace(),
+                        env = "live",
+                        profile = null,
+                        newId = null,
                         version = getString("VERSION")
                     )
                     RequestHandler.requestPOST(createProfileEndpoint, jsonObject, "POST")
-
                     identify(uuid, "", false)
                 }
             }
@@ -247,6 +320,7 @@ class FynoCore {
                         val mergeProfileEndpoint = FynoUtils().getEndpoint(
                             "merge_profile",
                             FynoUser.getWorkspace(),
+                            env = null,
                             profile = oldDistinctId,
                             newId = newDistinctId,
                             version = getString("VERSION")

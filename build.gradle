@@ -6,6 +6,7 @@ buildscript {
         mavenCentral()
         maven { url 'https://jitpack.io' }
         maven { url "https://storage.googleapis.com/logrocket-maven/" }
+        maven { url "https://s01.oss.sonatype.org/content/repositories/releases/" }
         flatDir {
             dirs 'libs'
             dirs project(':app').file('libs')
@@ -25,6 +26,7 @@ allprojects {
         google()
         mavenCentral()
         maven { url 'https://jitpack.io' }
+        maven { url 'https://s01.oss.sonatype.org/content/repositories/releases/' }
     }
 }
 

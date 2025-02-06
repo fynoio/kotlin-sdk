@@ -1,19 +1,13 @@
 package io.fyno.core.helpers
 
-import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 import io.fyno.core.RequestHandler
 import io.fyno.core.utils.Logger
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
-
 
 class Config(
     var key: String? = null,
@@ -26,11 +20,12 @@ class SQLDataHelper(context: Context?) :
     private val db: SQLiteDatabase = writableDatabase
 
     override fun onCreate(db: SQLiteDatabase) {
-        val createTableQuery = "CREATE TABLE api_responses (id INTEGER PRIMARY KEY, data TEXT)"
+        Log.i(TAG, "onCreate: Creating Fyno databases");
+        val createTableQuery = "CREATE TABLE IF NOT EXISTS api_responses (id INTEGER PRIMARY KEY, data TEXT)"
         val query =
-            "CREATE TABLE $TABLENAME_config ($config_Id INTEGER PRIMARY KEY AUTOINCREMENT,$config_Key TEXT ,$config_Value TEXT );"
+            "CREATE TABLE IF NOT EXISTS $TABLENAME_config ($config_Id INTEGER PRIMARY KEY AUTOINCREMENT,$config_Key TEXT ,$config_Value TEXT );"
         val createReqTableQuery = """
-            CREATE TABLE $REQ_TABLE_NAME (
+            CREATE TABLE IF NOT EXISTS $REQ_TABLE_NAME (
                 $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COLUMN_URL TEXT,
                 $COLUMN_POST_DATA TEXT,
@@ -41,7 +36,7 @@ class SQLDataHelper(context: Context?) :
         """.trimIndent()
 
         val createCBTableQuery = """
-            CREATE TABLE $CB_TABLE_NAME (
+            CREATE TABLE IF NOT EXISTS $CB_TABLE_NAME (
                 $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COLUMN_URL TEXT,
                 $COLUMN_POST_DATA TEXT,
@@ -57,15 +52,23 @@ class SQLDataHelper(context: Context?) :
             db.execSQL(createReqTableQuery)
             db.execSQL(createCBTableQuery)
         } catch (e: Exception) {
-            Logger.d("db", "onCreate - $e")
+            Logger.e("db", "onCreate - $e", e)
         }
     }
 
+    override fun close() {
+        db.close()
+        super.close()
+    }
+
     fun updateStatusAndLastProcessedTime(id:Int?, tableName: String,status:String){
+        if (!this.doesTableExist(db, REQ_TABLE_NAME) || !this.doesTableExist(db, CB_TABLE_NAME)) {
+            Logger.i(TAG, "Creating tables in updateStatusAndLastProcessedTime")
+            this.onCreate(db);
+        }
         if(id == 0) {
             return
         }
-
         val contentValues = ContentValues().apply {
             put(COLUMN_STATUS, status)
             put(COLUMN_LAST_PROCESSED_AT, getCurrentTimestamp())
@@ -78,13 +81,16 @@ class SQLDataHelper(context: Context?) :
     }
 
     fun updateAllRequestsToNotProcessed() {
+        if (!this.doesTableExist(db, REQ_TABLE_NAME) || !this.doesTableExist(db, CB_TABLE_NAME)) {
+            Logger.i(TAG, "Creating tables in updateAllRequestsToNotProcessed")
+            this.onCreate(db);
+        }
         val contentValues = ContentValues().apply {
             put(COLUMN_STATUS, "not_processed")
             put(COLUMN_LAST_PROCESSED_AT, getCurrentTimestamp())
         }
-
-        db.update(REQ_TABLE_NAME,contentValues,null,null)
-        db.update(CB_TABLE_NAME,contentValues,null,null)
+        db.update(REQ_TABLE_NAME, contentValues, null, null)
+        db.update(CB_TABLE_NAME, contentValues, null, null)
     }
 
     private fun getCurrentTimestamp(): Long {
@@ -93,27 +99,36 @@ class SQLDataHelper(context: Context?) :
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         try {
+            Logger.d("db", "onUpgrade -Drop Tables")
             db.execSQL("DROP TABLE IF EXISTS $TABLENAME_config")
             db.execSQL("DROP TABLE IF EXISTS $REQ_TABLE_NAME")
             db.execSQL("DROP TABLE IF EXISTS $CB_TABLE_NAME")
         } catch (e: Exception) {
-            Logger.d("db", "onUpgrade - $e")
+            Logger.e("db", "onUpgrade - $e", e)
         }
         onCreate(db)
     }
 
     private fun insert_config(table_model_obj: Config) {
+        if (!this.doesTableExist(db, REQ_TABLE_NAME) || !this.doesTableExist(db, CB_TABLE_NAME)) {
+            Logger.w(TAG, "Creating tables in ate")
+            this.onCreate(db);
+        }
         val contentValues = ContentValues()
         contentValues.put(config_Key, table_model_obj.key)
         contentValues.put(config_Value, table_model_obj.value)
         try {
             db.insert(TABLENAME_config, null, contentValues)
         } catch (e: Exception) {
-            Logger.d("db", "insert_config - $e")
+            Logger.e("db", "insert_config - $e", e)
         }
     }
 
     fun insertRequest(request:RequestHandler.Request, tableName:String, id: Int? = 0){
+        if (!this.doesTableExist(db, REQ_TABLE_NAME) || !this.doesTableExist(db, CB_TABLE_NAME)) {
+            Logger.i(TAG, "Creating tables in insertRequest")
+            this.onCreate(db);
+        }
         val values = ContentValues().apply {
             put(COLUMN_URL, request.url)
             put(COLUMN_POST_DATA, request.postData?.toString())
@@ -128,41 +143,34 @@ class SQLDataHelper(context: Context?) :
         try {
             db.insert(tableName, null, values)
         } catch (e: Exception) {
-            Logger.d(TAG, "insert_requests - $e")
+            Logger.e(TAG, "insert_requests - $e", e)
         }
     }
 
     fun deleteRequestByID(id:Int?, tableName: String){
+        if (!this.doesTableExist(db, REQ_TABLE_NAME) || !this.doesTableExist(db, CB_TABLE_NAME)) {
+            Logger.i(TAG, "Creating tables in deleteRequestByID")
+            this.onCreate(db);
+        }
         if(id == 0) {
             return
         }
-
         try {
             db.delete(tableName,"$COLUMN_ID = ?", arrayOf(id.toString()))
         } catch (e: Exception) {
-            Logger.d("db", "deleteRequestByID - $e")
+            Logger.e("db", "deleteRequestByID - $e", e)
         }
     }
 
-    fun getNextRequest(): Cursor {
+    fun getNextRequest(tableName: String): Cursor {
+        if (!this.doesTableExist(db, REQ_TABLE_NAME) || !this.doesTableExist(db, CB_TABLE_NAME)) {
+            Logger.i(TAG, "Creating tables in getNextRequest")
+            this.onCreate(db);
+        }
         return db.query(
-            REQ_TABLE_NAME,
+            tableName,
             null,
-            "$COLUMN_STATUS = \"not_processed\"",
-            null,
-            null,
-            null,
-            "$COLUMN_ID ASC",
-            "1"
-        )
-    }
-
-    @SuppressLint("Range")
-    fun getNextCBRequest(): Cursor {
-        return db.query(
-            CB_TABLE_NAME,
-            null,
-            "$COLUMN_STATUS = \"not_processed\"",
+            "$COLUMN_STATUS = \'not_processed\'",
             null,
             null,
             null,
@@ -172,6 +180,10 @@ class SQLDataHelper(context: Context?) :
     }
 
     fun insertConfigByKey(table_model_obj: Config) {
+        if (!this.doesTableExist(db, REQ_TABLE_NAME) || !this.doesTableExist(db, CB_TABLE_NAME)) {
+            Logger.i(TAG, "Creating tables in insertConfigByKey")
+            this.onCreate(db);
+        }
         var c: Cursor? = null
         try {
             val q1 =
@@ -191,11 +203,11 @@ class SQLDataHelper(context: Context?) :
                     }
                 }
             } else {
+                c.close()
                 insert_config(table_model_obj)
             }
-            c.close()
         } catch (e: Exception) {
-            Logger.d("db", "insert_configByKey - $e")
+            Logger.e("db", "insert_configByKey - $e", e)
         } finally {
             c?.close()
         }
@@ -203,6 +215,10 @@ class SQLDataHelper(context: Context?) :
 
 
     fun getConfigByKey(key: String): Config {
+        if (!this.doesTableExist(db, REQ_TABLE_NAME) || !this.doesTableExist(db, CB_TABLE_NAME)) {
+            Logger.i(TAG, "Creating tables in getConfigByKey")
+            this.onCreate(db);
+        }
         val log = Config()
         var c: Cursor? = null
         try {
@@ -218,7 +234,7 @@ class SQLDataHelper(context: Context?) :
             }
             c.close()
         } catch (e: Exception) {
-            Logger.d("db", "getconfigByKey - $e")
+            Logger.e("db", "getConfigByKey - $e", e)
         } finally {
             c?.close()
         }
@@ -226,11 +242,30 @@ class SQLDataHelper(context: Context?) :
     }
 
     fun deleteAllConfigs() {
+            if (!this.doesTableExist(db, REQ_TABLE_NAME) || !this.doesTableExist(db, CB_TABLE_NAME)) {
+                Logger.i(TAG, "Creating tables in deleteAllConfigs")
+                this.onCreate(db);
+            }
         try {
             db.execSQL("DELETE FROM $TABLENAME_config")
         } catch (e: Exception) {
-            Logger.d("db", "deleteAllConfigs - $e")
+            Logger.e("db", "deleteAllConfigs - $e", e)
         }
+    }
+
+    private fun doesTableExist(db: SQLiteDatabase, tableName: String): Boolean {
+        val cursor = db.rawQuery(
+            "select DISTINCT tbl_name from sqlite_master where tbl_name = '$tableName'",
+            null
+        )
+        if (cursor != null) {
+            if (cursor.count > 0) {
+                cursor.close()
+                return true
+            }
+        }
+        cursor.close()
+        return false
     }
 
     companion object {
@@ -251,4 +286,3 @@ class SQLDataHelper(context: Context?) :
         const val COLUMN_STATUS = "status"
     }
 }
-

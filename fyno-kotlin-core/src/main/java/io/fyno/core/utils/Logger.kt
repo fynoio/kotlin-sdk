@@ -12,7 +12,7 @@ enum class LogLevel(val num: Int) {
 }
 
 public object Logger {
-    var Level = LogLevel.VERBOSE
+    var Level = LogLevel.INFO
 
     fun i(tag: String, message: String) {
         if (Level <= LogLevel.INFO) {
