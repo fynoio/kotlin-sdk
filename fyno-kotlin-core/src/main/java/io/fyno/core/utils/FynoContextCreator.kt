@@ -13,6 +13,7 @@ object FynoContextCreator {
         get() {
             if (_sqlDataHelper == null) {
                 Logger.w("FYNO_CONTEXT_CREATOR", "SQLDataHelper is accessed before initialization.")
+                return null
             }
             return _sqlDataHelper!!
         }

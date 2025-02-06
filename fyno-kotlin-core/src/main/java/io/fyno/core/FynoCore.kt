@@ -164,7 +164,15 @@ class FynoCore {
                 FynoUser.identify(uniqueId)
         }
          fun updateName(name: String?) {
-            if(name.isNullOrEmpty()){
+             if (!FynoContextCreator.isInitialized()) {
+                 Logger.d(TAG, "Fyno context not initialized - update name failed")
+                 return
+             }
+             if(FynoUser.getIdentity().isEmpty()){
+                 Logger.d(TAG, "Fyno distinct id is not set - update name failed")
+                 return
+             }
+             if(name?.trim()?.isEmpty() == true){
                 return
             }
             if(FynoUser.getUserName() === name) return
@@ -178,19 +186,16 @@ class FynoCore {
             )
             runBlocking(Dispatchers.IO) {
                 RequestHandler.requestPOST(upsertEndpoint, getParamsObj(FynoUser.getIdentity(), name), "PUT")
-                FynoUser.setUserName(name);
+                if (name != null) {
+                    FynoUser.setUserName(name)
+                };
             }
         }
 
-        private fun getParamsObj(uniqueId: String, name: String? = null): JSONObject {
+        private fun getChannelParamsObj(uniqueId: String, name: String? = null){
             val jsonObject = JSONObject()
             val channelObj = JSONObject()
             val pushObj = JSONArray()
-
-            jsonObject.put("distinct_id", uniqueId)
-            if (!name.isNullOrEmpty()) {
-                jsonObject.put("name", name)
-            }
 
             val fcmToken = FynoUser.getFcmToken()
             val xiaomiToken = FynoUser.getMiToken()
@@ -209,6 +214,16 @@ class FynoCore {
                 channelObj.put("push", pushObj)
                 jsonObject.put("channel", channelObj)
             }
+        }
+
+        private fun getParamsObj(uniqueId: String, name: String? = null): JSONObject {
+            val jsonObject = JSONObject()
+
+            jsonObject.put("distinct_id", uniqueId)
+            if (!name.isNullOrEmpty()) {
+                jsonObject.put("name", name)
+            }
+
             return jsonObject
         }
 

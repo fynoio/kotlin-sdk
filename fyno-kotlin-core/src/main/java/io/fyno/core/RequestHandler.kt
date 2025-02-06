@@ -21,7 +21,7 @@ object RequestHandler {
 
     private const val TIMEOUT = 6000
     private const val MAX_BACKOFF_DELAY: Long = 60000
-    private const val MAX_RETRIES = 1
+    private const val MAX_RETRIES = 3
     private lateinit var sqlDataHelper: SQLDataHelper
 
     interface NetworkCallback {
@@ -43,7 +43,7 @@ object RequestHandler {
                     Logger.d("RequestHandler", "handleRetries: Retry attempt $retries for ${request.url}")
                     val success =  async { doRequestAsync(request, id, context) }.await()
                     Logger.d("RequestHandler", "handleRetries: Request started: ${request.url}, retry count = $retries, res -> $success")
-                    if (success) return@withContext true
+                    if (success) return@withContext true else retries++
                 } catch (e: Exception) {
                     Logger.d("RequestHandler", "handleRetries: Request failed: ${e.message}")
                     val delayMillis = calculateDelay(retries)
@@ -115,7 +115,7 @@ object RequestHandler {
                 in 400..499 -> {
                     if(responseCode == 404) {
                         conn.disconnect()
-                        return@withContext false
+                        return@withContext true
                     }
                     val inputStream = conn.errorStream
                     val response = inputStream.bufferedReader().use(BufferedReader::readText)

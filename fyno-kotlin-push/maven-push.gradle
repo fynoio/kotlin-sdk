@@ -5,7 +5,7 @@ class Global {
     static def POM_NAME = 'pushlibrary'
     static def POM_ARTIFACT_ID = 'pushlibrary'
     static def POM_PACKAGING = 'aar'
-    static def VERSION_NAME = '2.2.2'
+    static def VERSION_NAME = '2.2.4'
 
     static def GROUP_ID = 'io.fyno.kotlin-sdk'
     static def POM_DESCRIPTION = 'Fyno Push Library'

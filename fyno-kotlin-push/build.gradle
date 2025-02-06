@@ -35,8 +35,8 @@ android {
 }
 
 dependencies {
-    implementation 'io.fyno.kotlin-sdk:core:2.2.2'
-    implementation 'io.fyno.kotlin-sdk:callback:2.2.2'
+    implementation 'io.fyno.kotlin-sdk:core:2.2.4'
+    implementation 'io.fyno.kotlin-sdk:callback:2.2.4'
 //    implementation project(path: ':fyno-kotlin-callback')
 //    implementation project(path: ':fyno-kotlin-core')
     compileOnly fileTree(include: ["*.jar", "*.aar"], dir: "libs")
