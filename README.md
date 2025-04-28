@@ -3,7 +3,7 @@
 ![Fyno: Fire your notifications](https://fynodev.s3.ap-south-1.amazonaws.com/others/Fyno_Banner.jpeg)
 Fyno Android SDK allows you to track your notification delivery
 
-<div style="display: flex;gap:10px"><img src="https://app.dev.fyno.io/images/fyno-logo.svg" width="50"><h1> Fyno - Android Push Notification Plugin</h1></div>
+<div style="display: flex;gap:10px"><h1> Fyno - Android Push Notification Plugin</h1></div>
 
 Fyno Android SDK handles push amplification, notification customization, and tracks your notification delivery
 
@@ -13,9 +13,6 @@ Fyno Android SDK handles push amplification, notification customization, and tra
 
     Setup Firebase and create application in Firebase Console. Please refer [FCM Documentation](https://docs.fyno.io/docs/push-fcm) for more details
 
-### 1.2 Xiaomi Setup:
-
-    Setup _Xiaomi Developer Account_ and create application in Xiaomi push console. Please refer [Mi Push Documentation](https://docs.fyno.io/docs/push-mi-push) for more details.
 
 ### 2. Configuration
 
@@ -23,14 +20,14 @@ Fyno Android SDK handles push amplification, notification customization, and tra
 
 ## 2. Installation
 
-### Step 1: Add maven { url 'https://jitpack.io' } repository to your root build gradle.
+### Step 1: Add maven repository to your root build gradle.
 
 ```kotlin
 // place the below snippet in your project gradle file
 allprojects {
     repositories {
         ...
-        maven { url 'https://jitpack.io' }
+        mavenCentral()
     }
 }
 ```
@@ -40,10 +37,10 @@ allprojects {
 Add following line inside dependencies {} in app build gradle
 
 ```kotlin
-implementation 'io.fyno.kotlin-sdk:1.0.0'
+implementation 'io.fyno.kotlin-sdk:<VERSION>'
 ```
 
-<sup>[check the latest version here](https://jitpack.io/#fynoio/kotlin-sdk)</sup>
+<sup>[check the latest version here](https://s01.oss.sonatype.org/#nexus-search;quick~io.fyno.kotlin-sdk)</sup>
 
 ## 3. Initilization
 
@@ -54,15 +51,21 @@ class MyApplication : Application() {
 
     override fun onCreate() {
         ...
-        FynoSdk.initialize(context, workspace_id, api_key)
+        FynoSdk.initialize(
+            context = applicationContext,
+            workspaceId = "your_workspace_id",
+            integrationId = "your_integration_id",
+            userId = "optional_user_id", // Optional
+            version = "live" // Optional (live/test default is "live")
+        )
         super.onCreate()
     }
 }
 //Initilize
-FynoSdk.initialize(context, Workspace_Id, Api_Key)
+FynoSdk.initialize(context, Workspace_Id, Integration_id, user_id, version)
 
 //Register for push
-FynoSdk.registerPush("Xiaomi_App_Id", "Xiaomi_App_Key", "Xiaomi_Push_Region", "Fyno_Integration_Id")
+FynoSdk.registerPush()
 
 //Identify user on login
 FynoSdk.identify("Distinct_Id")
@@ -81,14 +84,14 @@ Add following line inside dependencies {...} in app build gradle
 ```kotlin
 dependencies{
     ...
-    implementation 'io.fyno.kotlin-sdk:core:1.0.0'
+    implementation 'io.fyno.kotlin-sdk:core:<VERSION>'
 }
 ```
 
 ### Initilization
 
 Fyno Core SDK is responsible for initilize the context to save Fyno configurations and user profiling.
-<br/> 1. To initilize Fyno sdk you have to call `FynoCore.initilize(this, "WSID", "APIKEY")`
+<br/> 1. To initilize Fyno sdk you have to call `FynoCore.initilize(this, "WSID", "INTEGRATION_ID", "USER_ID, "VERSION")`
 <br/> 2. On user login to create a user profile call `FynoUser.identify("Distinct_Id")
 
 ## Fyno Push
@@ -102,7 +105,7 @@ Add following line inside dependencies {} in app build gradle
 ```kotlin
 dependencies{
     ...
-    implementation 'io.fyno.kotlin-sdk:pushlibrary:1.0.0'
+    implementation 'io.fyno.kotlin-sdk:pushlibrary:<VERSION>'
 }
 ```
 
@@ -111,15 +114,14 @@ Download the google-services.json from Firebase console and place it in the root
 ### Initilization
 
 Fyno Push SDK is responsible for handling push rendering and push amplification.
-<br/> 1. To initilize Fyno Push you are required to use `FynoCore` you have to call `FynoCore.initilize(this, "WSID", "APIKEY")`
+<br/> 1. To initilize Fyno Push you are required to use `FynoCore` you have to call `FynoCore.initilize(this, "WSID", "INTEGRATION_ID", "DISTINCT_ID", "VERSION")`
 <br/> 2. To initilize push call `FynoPush.registerPush` method
-<br/> 2.1 Push Amplification: To make use of push amplification Follow [Mi Push Documentation](https://docs.fyno.io/docs/push-mi-push) to implement Xiaomi push
 
 ```
 //register push
 FynoPush.registerPush("Xiaomi_App_Id", "Xiaomi_App_Key", "Xiaomi_Push_Region", "Fyno_Integration_Id")
 //register push without amplification
-FynoPush.registerFcm("Fyno_Integration_id")
+FynoPush.registerFcm()
 ```
 
 ## Fyno Callback
@@ -133,7 +135,7 @@ Add following line inside dependencies {} in app build gradle
 ```kotlin
 dependencies{
     ...
-    implementation 'io.fyno.kotlin-sdk:callback:1.0.0'
+    implementation 'io.fyno.kotlin-sdk:callback:<VERSION>'
 }
 ```
 
@@ -145,9 +147,3 @@ above method required 2 required parameters and 1 optional parameter
 `callback_url - Required parameter - You can get the callback_url from the notification additional payload if the notification triggered from Fyno.`
 `status - Required parameter - Status of the push notification to be notified to Fyno.`
 
-```
-//register push
-FynoPush.registerPush("Xiaomi_App_Id", "Xiaomi_App_Key", "Xiaomi_Push_Region", "Fyno_Integration_Id")
-//register push without amplification
-FynoPush.registerFcm("Fyno_Integration_id")
-```
